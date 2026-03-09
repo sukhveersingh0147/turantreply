@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
+// Force redeploy - Next.js 16 type alignment
 export async function PATCH(
-    req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
+    request: NextRequest,
+    context: { params: Promise<{ id: string }> }
 ) {
-    const { id } = await params;
+    const { id } = await context.params;
     const session = await auth();
 
     if (!session || !session.user) {
@@ -14,7 +15,7 @@ export async function PATCH(
     }
 
     try {
-        const { triggerKeyword, responseMessage, isActive } = await req.json();
+        const { triggerKeyword, responseMessage, isActive } = await request.json();
 
         const business = await prisma.business.findUnique({
             where: { userId: session.user.id },
@@ -44,10 +45,10 @@ export async function PATCH(
 }
 
 export async function DELETE(
-    req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
+    request: NextRequest,
+    context: { params: Promise<{ id: string }> }
 ) {
-    const { id } = await params;
+    const { id } = await context.params;
     const session = await auth();
 
     if (!session || !session.user) {
