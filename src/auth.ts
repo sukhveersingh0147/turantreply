@@ -41,48 +41,56 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             },
             async authorize(credentials) {
                 const fs = require('fs');
-                const log = (msg: string) => fs.appendFileSync('auth-debug.log', msg + '\n');
+                const log = (msg: string) => {
+                    const time = new Date().toISOString();
+                    fs.appendFileSync('auth-debug.log', `[${time}] ${msg}\n`);
+                    console.log(`[AUTH DEBUG] ${msg}`);
+                };
 
                 const email = credentials?.email ? (credentials.email as string).trim() : "";
                 const dbUrl = process.env.DATABASE_URL || "MISSING";
                 const maskedUrl = dbUrl.replace(/:[^@]+@/, ":****@");
-                log(`Authorize called with email: "${email}" (DB: ${maskedUrl})`);
+                log(`Authorize called with email: "${email}"`);
 
                 if (!email || !credentials?.password) {
-                    log("Missing credentials");
+                    log("Missing credentials (email or password)");
                     return null;
                 }
 
                 try {
+                    log("Searching for user in database...");
                     const user = await prisma.user.findUnique({
                         where: {
                             email: email
                         }
                     });
 
-                    log(`User found in DB: ${user ? `"${user.email}"` : "NONE"}`);
-
                     if (!user) {
                         log(`Login failed: User "${email}" not found.`);
                         return null;
                     }
 
+                    log(`User found: ${user.email}, ID: ${user.id}, Role: ${user.role}`);
+
                     if (!user.password) {
-                        log(`Login failed: User "${email}" exists but has no password. (Signed up with Google?)`);
+                        log(`Login failed: User "${email}" exists but has no password (likely OAuth user).`);
                         return null;
                     }
 
+                    log("Comparing passwords...");
                     const isPasswordValid = await bcrypt.compare(
                         credentials.password as string,
                         user.password as string
                     );
-                    log(`Password valid: ${isPasswordValid}`);
+                    log(`Password validation result: ${isPasswordValid}`);
 
                     if (!isPasswordValid) {
+                        log(`Login failed: Incorrect password for "${email}".`);
                         return null;
                     }
 
                     if (user.status === "SUSPENDED") {
+                        log(`Login failed: Account suspended for "${email}".`);
                         throw new Error("Your account has been suspended. Please contact support.");
                     }
 
@@ -96,7 +104,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                         status: user.status
                     };
                 } catch (error) {
-                    log(`Auth Error: ${(error as any).message}`);
+                    log(`Auth Error during execution: ${(error as any).message}`);
+                    if (error instanceof Error) {
+                        log(`Stack: ${error.stack}`);
+                    }
                     return null;
                 }
             }
