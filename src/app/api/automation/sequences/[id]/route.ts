@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
     const session = await auth();
     if (!session?.user?.id) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -16,7 +17,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     });
 
     const sequence = await prisma.followUpSequence.findUnique({
-        where: { id: params.id }
+        where: { id }
     });
 
     if (!sequence || sequence.businessId !== business?.id) {
@@ -24,7 +25,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
 
     const updated = await prisma.followUpSequence.update({
-        where: { id: params.id },
+        where: { id },
         data: {
             name,
             isActive,
@@ -43,7 +44,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     return NextResponse.json(updated);
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
     const session = await auth();
     if (!session?.user?.id) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -54,7 +56,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     });
 
     const sequence = await prisma.followUpSequence.findUnique({
-        where: { id: params.id }
+        where: { id }
     });
 
     if (!sequence || sequence.businessId !== business?.id) {
@@ -62,7 +64,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     }
 
     await prisma.followUpSequence.delete({
-        where: { id: params.id }
+        where: { id }
     });
 
     return NextResponse.json({ success: true });

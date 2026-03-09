@@ -9,7 +9,7 @@ dns.setDefaultResultOrder('ipv4first');
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig,
-    adapter: PrismaAdapter(prisma),
+    adapter: PrismaAdapter(prisma) as any,
     trustHost: true,
     session: { strategy: "jwt" },
     events: {

@@ -95,7 +95,7 @@ export default function LeadsClient({ initialData }: { initialData: any }) {
                                                 <div className="flex items-center gap-1.5">
                                                     <div className="font-semibold text-sm">{lead.name}</div>
                                                     {lead.isAiPaused && (
-                                                        <ShieldAlert className="w-3 h-3 text-orange-400" title="AI Paused" />
+                                                        <ShieldAlert className="w-3 h-3 text-orange-400" />
                                                     )}
                                                 </div>
                                                 <div className="text-[10px] text-white/30">{lead.phone}</div>

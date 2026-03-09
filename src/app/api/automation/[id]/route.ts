@@ -4,8 +4,9 @@ import { prisma } from "@/lib/prisma";
 
 export async function PATCH(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
     const session = await auth();
 
     if (!session || !session.user) {
@@ -14,7 +15,6 @@ export async function PATCH(
 
     try {
         const { triggerKeyword, responseMessage, isActive } = await req.json();
-        const { id } = params;
 
         const business = await prisma.business.findUnique({
             where: { userId: session.user.id },
@@ -45,8 +45,9 @@ export async function PATCH(
 
 export async function DELETE(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
     const session = await auth();
 
     if (!session || !session.user) {
@@ -54,8 +55,6 @@ export async function DELETE(
     }
 
     try {
-        const { id } = params;
-
         const business = await prisma.business.findUnique({
             where: { userId: session.user.id },
         });
