@@ -1,0 +1,203 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          String    @default("client") // client, admin, support_admin
+  status        String    @default("ACTIVE") // ACTIVE, SUSPENDED
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  business      Business?
+  adminLogs     AdminLog[]
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Business {
+  id               String    @id @default(cuid())
+  name             String
+  industry         String?
+  description      String?
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  whatsappNumber   String?
+  waToken          String?
+  waPhoneNumberId  String?
+  openaiApiKey     String?
+  aiSystemPrompt   String?
+  
+  plan             String    @default("FREE") // FREE, PRO, ENTERPRISE
+  subscriptionStatus String  @default("ACTIVE") // ACTIVE, EXPIRED, TRIAL
+  razorpayCustomerId String?
+  razorpaySubscriptionId String?
+  subscriptionExpiresAt DateTime?
+  lastPayment      DateTime?
+  
+  // Usage tracking
+  aiRepliesUsed    Int       @default(0)
+  lastLimitReset   DateTime  @default(now())
+  knowledgeBase    String?   @db.Text
+  
+  leads            Lead[]
+  automations      Automation[]
+  messages         Message[]
+  broadcasts       Broadcast[]
+  recoverySettings LeadRecovery?
+  followupSequences FollowUpSequence[]
+  
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model Lead {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  phone       String
+  name        String?
+  status      String   @default("NEW")
+  lastQuery   String?
+  score       Int      @default(0)
+  isAiPaused  Boolean  @default(false)
+  
+  // Sequence tracking
+  enrolledSequenceId String?
+  currentStepIndex    Int     @default(0)
+  nextFollowUpDate    DateTime?
+  recoverySentAt      DateTime?
+  
+  messages    Message[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([businessId, phone])
+}
+
+model LeadRecovery {
+  id              String   @id @default(cuid())
+  businessId      String   @unique
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  isEnabled       Boolean  @default(true)
+  waitTimeMinutes Int      @default(30)
+  message         String   @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model FollowUpSequence {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String
+  isActive    Boolean  @default(true)
+  steps       SequenceStep[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SequenceStep {
+  id          String   @id @default(cuid())
+  sequenceId  String
+  sequence    FollowUpSequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  dayDelay    Int      // 1 for Day 1, 3 for Day 3, etc.
+  message     String   @db.Text
+  order       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  leadId      String
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  waMessageId String?  @unique
+  message     String
+  sender      String   // CUSTOMER or BUSINESS
+  senderType  String   // CUSTOMER, AUTOMATION, AI
+  aiModel     String?
+  timestamp   DateTime @default(now())
+}
+
+model Automation {
+  id              String   @id @default(cuid())
+  businessId      String
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  triggerKeyword  String
+  responseMessage String
+  isActive        Boolean  @default(true)
+  matchCount      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Broadcast {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String
+  content     String
+  status      String   @default("PENDING")
+  sentCount   Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model AdminLog {
+  id          String   @id @default(cuid())
+  adminId     String
+  admin       User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  action      String   // e.g., "USER_SUSPENDED", "PLAN_UPGRADED"
+  targetId    String?  // ID of the user or business affected
+  details     String?  @db.Text
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+}
