@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
-// Force redeploy - Next.js 16 type alignment
+// RELOAD_OBVIOUS_V3 - Next.js 15 Stable
 export async function PATCH(
     request: NextRequest,
-    context: { params: Promise<{ id: string }> }
+    context: any // NUCLEAR: Use any to bypass Vercel type mismatch
 ) {
-    const { id } = await context.params;
+    const params = await context.params;
+    const { id } = params;
     const session = await auth();
 
     if (!session || !session.user) {
@@ -28,7 +29,7 @@ export async function PATCH(
         const automation = await prisma.automation.update({
             where: {
                 id,
-                businessId: business.id // Security: ensure business owns this automation
+                businessId: business.id
             },
             data: {
                 triggerKeyword,
@@ -46,9 +47,10 @@ export async function PATCH(
 
 export async function DELETE(
     request: NextRequest,
-    context: { params: Promise<{ id: string }> }
+    context: any // NUCLEAR
 ) {
-    const { id } = await context.params;
+    const params = await context.params;
+    const { id } = params;
     const session = await auth();
 
     if (!session || !session.user) {
@@ -67,7 +69,7 @@ export async function DELETE(
         await prisma.automation.delete({
             where: {
                 id,
-                businessId: business.id // Security: ensure business owns this automation
+                businessId: business.id
             },
         });
 

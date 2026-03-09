@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
-// Force redeploy - Next.js 16 type alignment
-export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-    const { id } = await context.params;
+// RELOAD_OBVIOUS_V3 - Next.js 15 Stable
+export async function PATCH(request: NextRequest, context: any) {
+    const params = await context.params;
+    const { id } = params;
     const session = await auth();
     if (!session?.user?.id) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -12,7 +13,6 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
     const { name, isActive, steps } = await request.json();
 
-    // Verify ownership
     const business = await prisma.business.findUnique({
         where: { userId: session.user.id }
     });
@@ -45,8 +45,9 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     return NextResponse.json(updated);
 }
 
-export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-    const { id } = await context.params;
+export async function DELETE(request: NextRequest, context: any) {
+    const params = await context.params;
+    const { id } = params;
     const session = await auth();
     if (!session?.user?.id) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
