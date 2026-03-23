@@ -9,10 +9,12 @@ import { AuthError } from "next-auth";
 export async function register(prevState: any, formData: FormData) {
     const firstName = formData.get("firstName") as string;
     const lastName = formData.get("lastName") as string;
-    const email = (formData.get("email") as string || "").trim();
+    const email = (formData.get("email") as string || "").trim().toLowerCase();
     const password = formData.get("password") as string;
     const company = formData.get("companyName") as string;
     const phone = formData.get("phone") as string;
+
+    const refCode = formData.get("ref") as string;
 
     if (!email || !password || !firstName || !company) {
         return { error: "Missing required fields" };
@@ -27,6 +29,16 @@ export async function register(prevState: any, formData: FormData) {
             return { error: "Email already exists" };
         }
 
+        let referredById = null;
+        if (refCode) {
+            const affiliate = await prisma.affiliate.findUnique({
+                where: { referralCode: refCode }
+            });
+            if (affiliate) {
+                referredById = affiliate.userId;
+            }
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create User and empty Business in a transaction
@@ -36,12 +48,10 @@ export async function register(prevState: any, formData: FormData) {
                     name: `${firstName} ${lastName}`,
                     email,
                     password: hashedPassword,
+                    referredById,
+                    isSetupComplete: false,
                 }
             });
-
-            // Initial 7-day trial
-            const trialExpiry = new Date();
-            trialExpiry.setDate(trialExpiry.getDate() + 7);
 
             await tx.business.create({
                 data: {
@@ -49,17 +59,32 @@ export async function register(prevState: any, formData: FormData) {
                     userId: user.id,
                     whatsappNumber: phone || null,
                     plan: "FREE",
-                    subscriptionStatus: "TRIAL",
-                    subscriptionExpiresAt: trialExpiry,
+                    subscriptionStatus: "ACTIVE",
                 }
             });
+
+            if (referredById) {
+                await tx.affiliate.update({
+                    where: { userId: referredById },
+                    data: { referralsCount: { increment: 1 } }
+                });
+            }
         });
 
+        const plan = formData.get("plan") as string;
+        const redirectPath = plan ? `/settings?tab=billing&upgrade=${plan}` : "/overview";
+
         // After successful registration, log them in
+        try {
+            const { cookies } = await import("next/headers");
+            const cookieStore = await cookies();
+            cookieStore.delete("referral_code");
+        } catch (e) {}
+
         await signIn("credentials", {
             email,
             password,
-            redirectTo: "/overview"
+            redirectTo: redirectPath
         });
 
     } catch (error) {
@@ -76,7 +101,7 @@ export async function register(prevState: any, formData: FormData) {
 }
 
 export async function login(prevState: any, formData: FormData) {
-    const email = (formData.get("email") as string || "").trim();
+    const email = (formData.get("email") as string || "").trim().toLowerCase();
     const password = formData.get("password") as string;
 
     if (!email || !password) {

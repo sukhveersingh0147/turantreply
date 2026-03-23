@@ -4,113 +4,199 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
+/**
+ * Ensures the user is an admin or support admin.
+ */
 async function ensureAdmin() {
     const session = await auth();
-    if (!session || !session.user) {
-        throw new Error("Unauthorized: No session found");
-    }
-    const role = session.user.role;
-    if (role !== "admin" && role !== "support_admin") {
+    if (session?.user?.role !== "admin" && session?.user?.role !== "support_admin") {
         throw new Error("Unauthorized: Admin access required");
     }
     return session;
 }
 
-async function logAdminAction(adminId: string, action: string, targetId?: string, details?: string) {
-    try {
-        await prisma.adminLog.create({
-            data: {
-                adminId,
-                action,
-                targetId,
-                details,
-            }
-        });
-    } catch (error) {
-        console.error("Failed to log admin action:", error);
-    }
-}
+// --- User Management ---
 
 export async function toggleUserStatus(userId: string, currentStatus: string) {
-    const session = await ensureAdmin();
-    const newStatus = currentStatus === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
-
+    await ensureAdmin();
+    const newStatus = currentStatus === "ACTIVE" ? "DISABLED" : "ACTIVE";
     await prisma.user.update({
         where: { id: userId },
-        data: { status: newStatus }
+        data: { status: newStatus as any }
     });
-
-    await logAdminAction(
-        session.user!.id!,
-        newStatus === "SUSPENDED" ? "USER_SUSPENDED" : "USER_ACTIVATED",
-        userId
-    );
-
     revalidatePath("/admin/users");
-    revalidatePath("/admin/dashboard");
 }
 
 export async function deleteUser(userId: string) {
-    const session = await ensureAdmin();
-
-    // Prevent deleting self
-    if (userId === session.user?.id) {
-        throw new Error("Cannot delete your own account");
-    }
-
+    await ensureAdmin();
     await prisma.user.delete({
         where: { id: userId }
     });
-
-    await logAdminAction(session.user!.id!, "USER_DELETED", userId);
-
     revalidatePath("/admin/users");
-    revalidatePath("/admin/dashboard");
 }
 
-export async function updateUserPlan(userId: string, plan: string) {
-    const session = await ensureAdmin();
+// --- Business Management ---
 
-    const business = await prisma.business.findUnique({
-        where: { userId }
-    });
-
-    if (!business) {
-        throw new Error("User does not have a business profile");
-    }
-
+export async function toggleBusinessStatus(businessId: string, currentStatus: string) {
+    await ensureAdmin();
+    const newStatus = currentStatus === "ACTIVE" ? "DISABLED" : "ACTIVE";
     await prisma.business.update({
-        where: { id: business.id },
-        data: { plan }
+        where: { id: businessId },
+        data: { subscriptionStatus: newStatus as any }
     });
-
-    await logAdminAction(
-        session.user!.id!,
-        "PLAN_UPDATED",
-        userId,
-        `Changed plan to ${plan}`
-    );
-
-    revalidatePath("/admin/users");
     revalidatePath("/admin/businesses");
+}
+
+export async function updateUserPlan(businessId: string, plan: string) {
+    await ensureAdmin();
+    await prisma.business.update({
+        where: { id: businessId },
+        data: { plan: plan as any }
+    });
+    revalidatePath("/admin/businesses");
+    revalidatePath("/admin/users");
+}
+
+export async function resetBusinessUsage(businessId: string) {
+    await ensureAdmin();
+    await prisma.business.update({
+        where: { id: businessId },
+        data: { aiRepliesUsed: 0 }
+    });
+    revalidatePath("/admin/users");
+}
+
+/**
+ * Alias for updateUserPlan to match SaaS context.
+ */
+export const updateBusinessPlan = updateUserPlan;
+
+/**
+ * Adds top-up credits (conversations) to a business.
+ */
+export async function addTopupCredits(businessId: string, amount: number) {
+    await ensureAdmin();
+    await prisma.business.update({
+        where: { id: businessId },
+        data: {
+            // @ts-ignore
+            topupBalance: { increment: amount }
+        }
+    });
+    revalidatePath("/admin/subscriptions");
+}
+
+// --- Affiliate Management ---
+
+export async function approveAffiliate(affiliateId: string) {
+    await ensureAdmin();
+    await prisma.affiliate.update({
+        where: { id: affiliateId },
+        data: { status: "ACTIVE" }
+    });
+    revalidatePath("/admin/affiliates");
+}
+
+export async function rejectAffiliate(affiliateId: string) {
+    await ensureAdmin();
+    await prisma.affiliate.update({
+        where: { id: affiliateId },
+        data: { status: "REJECTED" }
+    });
+    revalidatePath("/admin/affiliates");
+}
+
+export async function updateAffiliateStatus(affiliateId: string, status: string) {
+    await ensureAdmin();
+    await prisma.affiliate.update({
+        where: { id: affiliateId },
+        data: { status: status as any }
+    });
+    revalidatePath("/admin/affiliates");
+}
+
+export async function updateAffiliateReferralCode(affiliateId: string, referralCode: string) {
+    await ensureAdmin();
+    await prisma.affiliate.update({
+        where: { id: affiliateId },
+        data: { referralCode }
+    });
+    revalidatePath("/admin/affiliates");
     return { success: true };
 }
 
-export async function toggleBusinessStatus(businessId: string, currentStatus: string) {
-    const session = await ensureAdmin();
-    const newStatus = currentStatus === "ACTIVE" ? "EXPIRED" : "ACTIVE";
-
-    await prisma.business.update({
-        where: { id: businessId },
-        data: { subscriptionStatus: newStatus }
+export async function fulfillPayoutRequest(requestId: string) {
+    await ensureAdmin();
+    // @ts-ignore
+    const request = await prisma.payoutRequest.findUnique({
+        where: { id: requestId },
+        include: { affiliate: true }
     });
 
-    await logAdminAction(
-        session.user!.id!,
-        "BUSINESS_STATUS_TOGGLED",
-        businessId,
-        `Status changed to ${newStatus}`
-    );
+    if (!request) throw new Error("Payout request not found");
 
-    revalidatePath("/admin/businesses");
+    await prisma.$transaction([
+        // @ts-ignore
+        prisma.payoutRequest.update({
+            where: { id: requestId },
+            data: { status: "PAID", paidAt: new Date() } as any
+        }),
+        prisma.affiliate.update({
+            where: { id: request.affiliateId },
+            data: { earningsPaid: { increment: request.amount } }
+        })
+    ]);
+
+    revalidatePath("/admin/affiliates");
+}
+
+export async function processPayout(affiliateId: string) {
+    await ensureAdmin();
+    const affiliate = await prisma.affiliate.findUnique({
+        where: { id: affiliateId }
+    });
+    
+    if (!affiliate) throw new Error("Affiliate not found");
+    
+    const amount = affiliate.earningsTotal - affiliate.earningsPaid;
+    if (amount <= 0) return;
+
+    await prisma.$transaction([
+        prisma.affiliate.update({
+            where: { id: affiliateId },
+            data: { earningsPaid: { increment: amount } }
+        }),
+        // @ts-ignore
+        prisma.payoutRequest.create({
+            data: {
+                affiliateId,
+                amount,
+                status: "PAID",
+                paidAt: new Date(),
+                upiId: affiliate.upiId || "MANUAL"
+            } as any
+        })
+    ]);
+    
+    revalidatePath("/admin/affiliates");
+}
+
+// --- Global Stats ---
+
+export async function getAdminStats() {
+    await ensureAdmin();
+    
+    const [totalUsers, totalBusinesses, activeLeads, totalMessages] = await Promise.all([
+        prisma.user.count(),
+        prisma.business.count(),
+        prisma.lead.count(),
+        prisma.message.count()
+    ]);
+
+    return {
+        totalUsers,
+        totalBusinesses,
+        activeLeads,
+        totalMessages
+    };
 }

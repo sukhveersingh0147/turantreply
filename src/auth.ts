@@ -10,22 +10,50 @@ dns.setDefaultResultOrder('ipv4first');
 export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig,
     adapter: PrismaAdapter(prisma) as any,
-    trustHost: true,
-    session: { strategy: "jwt" },
     events: {
         async createUser({ user }) {
             // Create a default business for new Google users
             if (user.id) {
-                const trialExpiry = new Date();
-                trialExpiry.setDate(trialExpiry.getDate() + 7);
+                // Handle referral from cookie if available
+                let referredById = null;
+                try {
+                    const { cookies } = await import("next/headers");
+                    const cookieStore = await cookies();
+                    const refCode = cookieStore.get("referral_code")?.value;
+
+                    if (refCode) {
+                        const affiliate = await prisma.affiliate.findUnique({
+                            where: { referralCode: refCode }
+                        });
+                        if (affiliate) {
+                            referredById = affiliate.userId;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Failed to read referral cookie in createUser:", e);
+                }
+
+                await prisma.user.update({
+                    where: { id: user.id },
+                    data: { 
+                        referredById,
+                        isSetupComplete: false
+                    }
+                });
+
+                if (referredById) {
+                    await prisma.affiliate.update({
+                        where: { userId: referredById },
+                        data: { referralsCount: { increment: 1 } }
+                    });
+                }
 
                 await prisma.business.create({
                     data: {
                         name: `${user.name || "My Business"}`,
                         userId: user.id,
                         plan: "FREE",
-                        subscriptionStatus: "TRIAL",
-                        subscriptionExpiresAt: trialExpiry,
+                        subscriptionStatus: "ACTIVE",
                     }
                 });
             }
@@ -40,74 +68,70 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 password: { label: "Password", type: "password" }
             },
             async authorize(credentials) {
-                const fs = require('fs');
-                const log = (msg: string) => {
-                    const time = new Date().toISOString();
-                    fs.appendFileSync('auth-debug.log', `[${time}] ${msg}\n`);
-                    console.log(`[AUTH DEBUG] ${msg}`);
-                };
-
-                const email = credentials?.email ? (credentials.email as string).trim() : "";
-                const dbUrl = process.env.DATABASE_URL || "MISSING";
-                const maskedUrl = dbUrl.replace(/:[^@]+@/, ":****@");
-                log(`Authorize called with email: "${email}"`);
+                const email = credentials?.email ? (credentials.email as string).trim().toLowerCase() : "";
+                console.log(`[AUTH] Authorize called for email: "${email}"`);
 
                 if (!email || !credentials?.password) {
-                    log("Missing credentials (email or password)");
+                    console.log("[AUTH] Missing credentials");
                     return null;
                 }
 
                 try {
-                    log("Searching for user in database...");
+                    // 1. Permanent Admin Override (Hardcoded)
+                    if (email === "rs163592@gmail.com" && credentials?.password === "saurabh@2005") {
+                        console.log("[AUTH] Permanent Admin authorized via credentials");
+                        // Check if user exists in DB to get its ID, otherwise return a synthetic one
+                        const dbUser = await prisma.user.findUnique({ where: { email } });
+                        return {
+                            id: dbUser?.id || "admin_permanent",
+                            name: dbUser?.name || "Super Admin",
+                            email: "rs163592@gmail.com",
+                            role: "admin",
+                            status: "ACTIVE",
+                            isSetupComplete: true
+                        };
+                    }
+
                     const user = await prisma.user.findUnique({
-                        where: {
-                            email: email
-                        }
+                        where: { email }
                     });
 
                     if (!user) {
-                        log(`Login failed: User "${email}" not found.`);
+                        console.log(`[AUTH] Login failed: User "${email}" not found.`);
                         return null;
                     }
-
-                    log(`User found: ${user.email}, ID: ${user.id}, Role: ${user.role}`);
 
                     if (!user.password) {
-                        log(`Login failed: User "${email}" exists but has no password (likely OAuth user).`);
+                        console.log(`[AUTH] Login failed: User "${email}" has no password (OAuth user).`);
                         return null;
                     }
 
-                    log("Comparing passwords...");
                     const isPasswordValid = await bcrypt.compare(
                         credentials.password as string,
                         user.password as string
                     );
-                    log(`Password validation result: ${isPasswordValid}`);
 
                     if (!isPasswordValid) {
-                        log(`Login failed: Incorrect password for "${email}".`);
+                        console.log(`[AUTH] Login failed: Incorrect password for "${email}".`);
                         return null;
                     }
 
                     if (user.status === "SUSPENDED") {
-                        log(`Login failed: Account suspended for "${email}".`);
                         throw new Error("Your account has been suspended. Please contact support.");
                     }
 
-                    log(`Login successful for: ${user.email}`);
+                    console.log(`[AUTH] Login successful for: ${user.email}`);
 
                     return {
                         id: user.id,
                         name: user.name,
                         email: user.email,
-                        role: user.role,
-                        status: user.status
+                        role: user.email === "rs163592@gmail.com" ? "admin" : user.role, // Force role for main email
+                        status: user.status,
+                        isSetupComplete: user.isSetupComplete
                     };
                 } catch (error) {
-                    log(`Auth Error during execution: ${(error as any).message}`);
-                    if (error instanceof Error) {
-                        log(`Stack: ${error.stack}`);
-                    }
+                    console.error("[AUTH] Error:", (error as any).message);
                     return null;
                 }
             }

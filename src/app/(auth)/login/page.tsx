@@ -12,15 +12,33 @@ export default function LoginPage() {
         <main className="min-h-screen bg-[#060a0f] bg-grid flex items-center justify-center px-4 py-20">
             <div className="fixed glow-orb w-96 h-96 bg-[#25D366]/15 top-0 left-1/2 -translate-x-1/2 pointer-events-none" />
 
-            <div className="w-full max-w-md relative z-10">
+            <div className="absolute top-8 left-0 right-0 z-20 px-4">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                    <Link href="/" className="flex items-center gap-2 group">
+                        <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shadow-md border border-white/5">
+                            <img src="/turantreply-removebg.png" alt="Logo" className="w-full h-full object-cover" />
+                        </div>
+                        <span className="text-xl font-bold font-[Outfit]">
+                            Turant<span className="text-gradient">Reply</span>
+                        </span>
+                    </Link>
+                    <div className="flex items-center gap-4">
+                        <span className="text-sm text-white/40 hidden sm:inline">New to Turant Reply?</span>
+                        <Link href="/signup" className="text-sm font-semibold text-[#25D366] hover:underline">
+                            Start Free Trial
+                        </Link>
+                    </div>
+                </div>
+            </div>
+
+            <div className="w-full max-w-md relative z-10 pt-10">
                 <div className="text-center mb-8">
                     <Link href="/" className="inline-flex items-center gap-2 mb-6">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#25D366] to-[#128C7E] flex items-center justify-center">
-                            <Zap className="w-5 h-5 text-white" fill="white" />
+                        <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center shadow-lg border border-white/5">
+                            <img src="/turantreply-removebg.png" alt="Turant Reply Logo" className="w-full h-full object-cover" />
                         </div>
                         <span className="text-2xl font-bold font-[Outfit]">
-                            Reply<span className="text-gradient">Flow</span>{" "}
-                            <span className="text-[#25D366]">AI</span>
+                            Turant<span className="text-gradient">Reply</span>
                         </span>
                     </Link>
                     <h1 className="text-3xl font-black font-[Outfit] mb-2">Welcome back</h1>
@@ -114,9 +132,9 @@ export default function LoginPage() {
                 </div>
 
                 <p className="text-center text-sm text-white/40 mt-5">
-                    Don&apos;t have an account?{" "}
-                    <Link href="/signup" className="text-[#25D366] font-medium hover:underline">
-                        Start free trial
+                    Already have an account?{" "}
+                    <Link href="/login" className="text-[#25D366] font-medium hover:underline">
+                        Sign in
                     </Link>
                 </p>
             </div>

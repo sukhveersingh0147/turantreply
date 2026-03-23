@@ -52,6 +52,16 @@ webhookRouter.post("/", async (req: Request, res: Response) => {
                     return res.sendStatus(200); // return 200 so FB doesn't retry
                 }
 
+                // Deduplication check
+                const existingMsg = await prisma.message.findUnique({
+                    where: { waMessageId: waMessageId }
+                });
+
+                if (existingMsg) {
+                    console.log(`[WEBHOOK] Message ${waMessageId} already processed. Skipping.`);
+                    return res.sendStatus(200);
+                }
+
                 // 2. Find or Create Lead
                 let lead = await prisma.lead.findUnique({
                     where: { businessId_phone: { businessId: business.id, phone: from } },
@@ -72,22 +82,36 @@ webhookRouter.post("/", async (req: Request, res: Response) => {
                     });
                 }
 
-                // 3. Save Incoming Message
-                await prisma.message.create({
-                    data: {
-                        businessId: business.id,
-                        leadId: lead.id,
-                        waMessageId,
-                        message: msgBody,
-                        sender: "CUSTOMER",
-                        senderType: "CUSTOMER",
-                    },
-                });
+                // 3. Save Incoming Message (Safe from race conditions)
+                try {
+                    await prisma.message.create({
+                        data: {
+                            businessId: business.id,
+                            leadId: lead.id,
+                            waMessageId,
+                            message: msgBody,
+                            sender: "CUSTOMER",
+                            senderType: "CUSTOMER",
+                        },
+                    });
+                } catch (msgErr: any) {
+                    if (msgErr.code === 'P2002') {
+                        console.log(`[BACKEND_WEBHOOK] Message ${waMessageId} already exists. Proceeding.`);
+                    } else {
+                        console.error("[BACKEND_WEBHOOK] Failed to save incoming message:", msgErr.message);
+                    }
+                }
 
                 // Initialize Services
                 const waService = new WhatsAppService(business.waToken!, business.waPhoneNumberId!);
 
-                // 4. Check Automations first
+                // ─── Subscription & Limits Check ──────────────────────────
+                if (business.subscriptionStatus === "EXPIRED") {
+                    console.log(`Subscription inactive for business ${business.id}. Skipping message.`);
+                    return res.sendStatus(200);
+                }
+
+                // Automation check
                 const matchedAutomation = business.automations.find(
                     (auto: any) => msgBody.toLowerCase().includes(auto.triggerKeyword.toLowerCase()) && auto.isActive
                 );
@@ -104,23 +128,20 @@ webhookRouter.post("/", async (req: Request, res: Response) => {
                         data: { matchCount: { increment: 1 } },
                     });
                 } else if (business.aiSystemPrompt) {
-                    // 5. Fallback to AI Service (Checking Limits First)
-                    const { getPlanLimit } = await import("../config/subscription");
-                    const limit = getPlanLimit(business.plan);
-
-                    if (business.aiRepliesUsed >= limit) {
-                        console.log(`Usage limit reached for business ${business.id}. Plan: ${business.plan}, Used: ${business.aiRepliesUsed}`);
-                        // Optionally send a "limit reached" message or just skip
-                        // For now we skip as per plan
-                        return res.sendStatus(200);
-                    }
-
-                    // Use Platform OpenAI Key from env
+                    // Start AI Logic
                     const platformApiKey = process.env.OPENAI_API_KEY;
                     if (!platformApiKey) {
                         console.error("PLATFORM_OPENAI_API_KEY is not set in environment variables.");
                         return res.sendStatus(200);
                     }
+
+                    // Check trial limits
+                    // @ts-ignore
+                    if (business.plan === "TRIAL" && business.trialConversationsToday >= 50) {
+                        console.log(`Trial limit reached for business ${business.id}`);
+                        return res.sendStatus(200);
+                    }
+
 
                     const aiService = new AIService(platformApiKey);
                     senderType = "AI";
@@ -139,33 +160,63 @@ webhookRouter.post("/", async (req: Request, res: Response) => {
                         ? `Knowledge Base:\n${business.knowledgeBase}\n\nRecent Conversation:\n${contextString}`
                         : contextString;
 
-                    replyMessage = await aiService.generateReply(business.aiSystemPrompt, msgBody, fullContext);
+                    replyMessage = await aiService.generateReply(business.aiSystemPrompt, msgBody, fullContext, business.businessType as any);
 
-                    // 5.1 Increment AI usage counter
+                    // Increment AI usage counter
                     await prisma.business.update({
                         where: { id: business.id },
-                        data: { aiRepliesUsed: { increment: 1 } },
+                        data: { 
+                            // @ts-ignore
+                            aiRepliesUsed: { increment: 1 },
+                            // @ts-ignore
+                            trialConversationsToday: { increment: 1 }
+                        },
                     });
                 } else {
                     console.log("No automation matched and AI is disabled for business", business.id);
                     return res.sendStatus(200);
                 }
 
-                // 6. Send the reply via WhatsApp
-                await waService.sendTextMessage(from, replyMessage);
-                await waService.markMessageAsRead(waMessageId);
+                // 7. Check if Auto Reply is enabled
+                // @ts-ignore
+                if (business.autoReplyEnabled) {
+                    // Send the reply via WhatsApp
+                    await waService.sendTextMessage(from, replyMessage);
+                    await waService.markMessageAsRead(waMessageId);
 
-                // 7. Save outgoing message
-                await prisma.message.create({
-                    data: {
-                        businessId: business.id,
-                        leadId: lead.id,
-                        message: replyMessage,
-                        sender: "BUSINESS",
-                        senderType: senderType,
-                        aiModel: senderType === "AI" ? "gpt-4o-mini" : null,
-                    },
-                });
+                    // 8. Save outgoing message
+                    try {
+                        await prisma.message.create({
+                            data: {
+                                businessId: business.id,
+                                leadId: lead.id,
+                                message: replyMessage,
+                                sender: "BUSINESS",
+                                senderType: "AI",
+                                aiModel: "gpt-4o-mini",
+                            },
+                        });
+                    } catch (msgErr: any) {
+                        console.error("[BACKEND_WEBHOOK] Failed to save outgoing message:", msgErr.message);
+                    }
+                } else {
+                    // Save as Suggestion
+                    try {
+                        // @ts-ignore
+                        await prisma.suggestion.create({
+                            data: {
+                                businessId: business.id,
+                                leadId: lead.id,
+                                content: replyMessage,
+                                status: "PENDING",
+                                type: "REPLY_SUGGESTION"
+                            }
+                        });
+                        console.log(`[WEBHOOK] Auto-reply disabled. Created suggestion for business ${business.id}`);
+                    } catch (sugErr: any) {
+                        console.error("[BACKEND_WEBHOOK] Failed to create suggestion:", sugErr.message);
+                    }
+                }
 
             } catch (error) {
                 console.error("Error processing webhook:", error);

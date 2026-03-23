@@ -8,15 +8,14 @@ import {
     TrendingUp,
     MessageSquare,
     Zap,
-    ArrowUp,
-    ArrowDown,
     Activity,
 } from "lucide-react";
 import { AdminChart } from "@/components/admin/AdminChart";
+import { AdminUsersTable } from "@/components/admin/AdminUsersTable";
+import { AdminAdvancedStats } from "@/components/admin/AdminAdvancedStats";
 
 async function getAdminMetrics() {
     const session = await auth();
-    // Extra safety although middleware handles it
     if (session?.user?.role !== "admin" && session?.user?.role !== "support_admin") {
         redirect("/overview");
     }
@@ -28,30 +27,28 @@ async function getAdminMetrics() {
         prisma.message.count(),
     ]);
 
-    // Calculate MRR (Mock logic based on current schema)
     const businesses = await prisma.business.findMany({
         select: { plan: true }
     });
 
     const mrr = businesses.reduce((acc: number, b: { plan: string }) => {
-        if (b.plan === "PRO") return acc + 29;
-        if (b.plan === "ENTERPRISE") return acc + 99;
+        if (b.plan === "STARTER") return acc + 29;
+        if (b.plan === "GROWTH") return acc + 99;
         return acc;
     }, 0);
 
     const activeSubscriptions = businesses.filter((b: { plan: string }) => b.plan !== "FREE").length;
 
-    // Mock chart data (In a real app, generate this from grouped database queries)
     const userGrowthData = [
         { name: "Jan", users: 12 },
         { name: "Feb", users: 25 },
-        { name: "Mar", users: totalUsers > 45 ? totalUsers : 45 },
+        { name: "Mar", users: totalUsers },
     ];
 
     const revenueData = [
         { name: "Jan", revenue: 450 },
         { name: "Feb", revenue: 890 },
-        { name: "Mar", revenue: mrr > 1200 ? mrr : 1240 },
+        { name: "Mar", revenue: mrr },
     ];
 
     const messageData = [
@@ -140,16 +137,16 @@ export default async function AdminDashboardPage() {
                             <Activity className="w-4 h-4 text-[#25D366]" />
                             Message Traffic (Past 7 Days)
                         </h3>
-                        <div className="flex items-center gap-4 text-[10px] text-white/40 uppercase tracking-widest font-bold">
-                            <span className="flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-[#25D366]" />
-                                Live Traffic
-                            </span>
-                        </div>
                     </div>
                     <AdminChart data={data.charts.messageData} type="bar" dataKey="messages" color="#25D366" />
                 </div>
             </div>
+
+            {/* Advanced Analytics */}
+            <AdminAdvancedStats />
+
+            {/* Users Table */}
+            <AdminUsersTable />
         </div>
     );
 }

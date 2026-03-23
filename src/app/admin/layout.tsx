@@ -27,6 +27,7 @@ const adminNavItems = [
     { href: "/admin/businesses", label: "Businesses", icon: Building2 },
     { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
     { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+    { href: "/admin/affiliates", label: "Affiliates", icon: Users },
     { href: "/admin/system", label: "System Health", icon: ShieldCheck },
     { href: "/admin/logs", label: "Audit Logs", icon: History },
 ];

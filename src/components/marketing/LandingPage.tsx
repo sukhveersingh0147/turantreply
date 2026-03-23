@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import Script from "next/script";
 import {
     ChevronRight,
     MessageCircle,
@@ -21,6 +22,43 @@ import {
 } from "lucide-react";
 
 // ──────────────────────────────────────────────────────────
+// STRUCTURED DATA (SEO)
+// ──────────────────────────────────────────────────────────
+function StructuredData() {
+    const jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Turant Reply",
+        "operatingSystem": "All",
+        "applicationCategory": "BusinessApplication",
+        "offers": {
+            "@type": "Offer",
+            "price": "999.00",
+            "priceCurrency": "INR"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.9",
+            "ratingCount": "2400"
+        },
+        "description": "The best WhatsApp AI sales assistant for Indian businesses. Auto-reply to leads, recover missed customers, and automate follow-ups 24/7.",
+        "brand": {
+            "@type": "Organization",
+            "name": "Turant Reply",
+            "logo": "/logo-full.png"
+        }
+    };
+
+    return (
+        <Script
+            id="structured-data"
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+    );
+}
+
+// ──────────────────────────────────────────────────────────
 // HERO SECTION
 // ──────────────────────────────────────────────────────────
 function HeroSection() {
@@ -37,10 +75,9 @@ function HeroSection() {
                     <span className="badge-live">🚀 Now Live — WhatsApp AI for Indian Businesses</span>
                 </div>
 
-                {/* Headline */}
                 <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black leading-normal sm:leading-[1.1] mb-8 sm:mb-12 font-[Outfit]">
                     <span className="block mb-2 border-b border-transparent">
-                        Stop losing <span className="text-gradient">WhatsApp</span> leads.
+                        India&apos;s #1 <span className="text-gradient">WhatsApp AI</span> Sales Assistant.
                     </span>
                     <span className="block text-white/90 text-3xl sm:text-5xl lg:text-6xl mt-4 sm:mt-2 mb-2">
                         Hire an{" "}
@@ -72,11 +109,9 @@ function HeroSection() {
                     </span>
                 </h1>
 
-                {/* Sub-headline */}
                 <p className="text-lg sm:text-xl text-white/60 max-w-2xl mx-auto mb-12 md:mb-16 leading-relaxed">
-                    ReplyFlow automatically replies to enquiries, recovers missed leads,
-                    and follows up with potential customers — 24/7, without any human
-                    effort.
+                    Turant Reply is the best WhatsApp bot for Indian businesses to automatically 
+                    reply to enquiries, recover leads, and automate follow-ups 24/7 without any human effort.
                 </p>
 
                 {/* CTA Buttons */}
@@ -85,7 +120,7 @@ function HeroSection() {
                         href="/signup"
                         className="w-full sm:w-auto text-center group flex items-center justify-center gap-2 px-8 py-4 text-base font-bold text-white rounded-xl bg-gradient-to-r from-[#25D366] to-[#128C7E] hover:shadow-[0_0_40px_rgba(37,211,102,0.5)] transition-all duration-300 hover:-translate-y-0.5 animate-pulse-glow"
                     >
-                        Start Free Trial
+                        Get Started
                         <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </Link>
                     <a
@@ -100,7 +135,7 @@ function HeroSection() {
                 {/* Stats row */}
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-8 md:gap-16 mb-24 md:mb-32">
                     {[
-                        { value: "2,400+", label: "Businesses using ReplyFlow" },
+                        { value: "2,400+", label: "Businesses using Turant Reply" },
                         { value: "98%", label: "Lead recovery rate" },
                         { value: "₹0", label: "Setup cost, ever" },
                     ].map((stat, i) => (
@@ -123,12 +158,12 @@ function HeroSection() {
                     <div className="glass-card overflow-hidden shadow-2xl pb-2">
                         {/* Chat header */}
                         <div className="bg-[#075E54] px-4 py-3 flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#25D366] to-[#128C7E] flex items-center justify-center">
-                                <Bot className="w-5 h-5 text-white" />
+                            <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
+                                <img src="/turantreply-removebg.png" alt="Turant Reply WhatsApp AI Bot" className="w-full h-full object-cover" />
                             </div>
                             <div className="flex-1 text-left">
                                 <div className="text-sm font-semibold text-white">
-                                    ReplyFlow AI
+                                    Turant Reply
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <div className="w-2 h-2 rounded-full bg-[#25D366]" />
@@ -165,7 +200,7 @@ function HeroSection() {
                         <div className="px-4 py-2 bg-[#06100c] flex items-center justify-center gap-2 border-t border-white/5">
                             <Zap className="w-3 h-3 text-[#25D366]" />
                             <span className="text-[10px] text-white/30 font-medium">
-                                Powered by ReplyFlow AI — Responded in 0.3s
+                                Powered by Turant Reply — Responded in 0.3s
                             </span>
                         </div>
                     </div>
@@ -318,12 +353,11 @@ function FeaturesOverview() {
                         Everything You Need
                     </span>
                     <h2 className="text-4xl sm:text-5xl font-black font-[Outfit] mb-4">
-                        One platform. Every tool to{" "}
-                        <span className="text-gradient">close more sales</span> on
-                        WhatsApp.
+                        Everything you need to{" "}
+                        <span className="text-gradient">automate WhatsApp sales</span> in India.
                     </h2>
                     <p className="text-lg text-white/50 max-w-2xl mx-auto">
-                        ReplyFlow replaces a full sales team with intelligent automation
+                        Turant Reply replaces a full sales team with intelligent automation
                         that works while you sleep.
                     </p>
                 </div>
@@ -382,7 +416,7 @@ const steps = [
     {
         num: "03",
         title: "AI Goes Live",
-        desc: "ReplyFlow monitors every message, replies instantly, and recovers lost leads automatically.",
+        desc: "Turant Reply monitors every message, replies instantly, and recovers lost leads automatically.",
         icon: Bot,
     },
     {
@@ -441,13 +475,13 @@ const plans = [
         period: "/month",
         desc: "Perfect for small businesses just starting out",
         features: [
-            "500 AI replies/month",
-            "100 leads in CRM",
-            "5 automation rules",
+            "1,000 Monthly Conversations",
+            "1,000 leads in CRM",
+            "10 automation rules",
             "Lead recovery engine",
             "Basic analytics",
         ],
-        cta: "Start Free Trial",
+        cta: "Get Started",
         popular: false,
         color: "border-white/10",
     },
@@ -457,14 +491,14 @@ const plans = [
         period: "/month",
         desc: "For growing businesses scaling their sales",
         features: [
-            "5,000 AI replies/month",
-            "2,000 leads in CRM",
+            "5,000 Monthly Conversations",
+            "5,000 leads in CRM",
             "Unlimited automations",
             "Broadcast messaging",
             "Advanced analytics",
             "Follow-up sequences",
         ],
-        cta: "Start Free Trial",
+        cta: "Get Started",
         popular: true,
         color: "border-[#25D366]/40",
     },
@@ -474,7 +508,7 @@ const plans = [
         period: "/month",
         desc: "For agencies managing multiple businesses",
         features: [
-            "Unlimited AI replies",
+            "Unlimited AI Conversations",
             "Unlimited leads",
             "Multi-business dashboard",
             "White-label option",
@@ -501,7 +535,7 @@ function PricingPreview() {
                         <span className="text-gradient">with your business</span>
                     </h2>
                     <p className="text-lg text-white/50">
-                        Start free. No credit card required.
+                        Get started for free. Upgrade as you scale.
                     </p>
                 </div>
 
@@ -576,7 +610,7 @@ const testimonials = [
         role: "Owner, FitZone Gym · Mumbai",
         avatar: "RS",
         quote:
-            "ReplyFlow recovered 23 leads in the first week alone. My gym enquiries used to just disappear. Now every message gets an instant reply even at 2am!",
+            "Turant Reply recovered 23 leads in the first week alone. My gym enquiries used to just disappear. Now every message gets an instant reply even at 2am!",
         rating: 5,
         metric: "+₹45,000 recovered revenue",
     },
@@ -610,7 +644,7 @@ function Testimonials() {
                     </span>
                     <h2 className="text-4xl sm:text-5xl font-black font-[Outfit] mb-4">
                         Businesses{" "}
-                        <span className="text-gradient">love ReplyFlow</span>
+                        <span className="text-gradient">love Turant Reply</span>
                     </h2>
                 </div>
 
@@ -668,11 +702,11 @@ function CTASection() {
                     <div className="glow-orb w-96 h-96 bg-[#25D366]/15 -top-24 left-1/2 -translate-x-1/2" />
                     <div className="relative z-10">
                         <span className="badge-live mb-6 inline-flex">
-                            🔥 Join 2,400+ businesses already using ReplyFlow
+                            🔥 Join 2,400+ businesses already using Turant Reply
                         </span>
                         <h2 className="text-4xl sm:text-5xl font-black font-[Outfit] mb-4">
-                            Start recovering{" "}
-                            <span className="text-gradient">lost leads today</span>
+                            Ready to scale your{" "}
+                            <span className="text-gradient">business with AI?</span>
                         </h2>
                         <p className="text-lg text-white/50 max-w-xl mx-auto mb-8">
                             Set up in 10 minutes. No credit card required. Cancel anytime.
@@ -684,13 +718,13 @@ function CTASection() {
                                 className="flex items-center gap-2 px-8 py-4 text-base font-bold text-white rounded-xl bg-gradient-to-r from-[#25D366] to-[#128C7E] hover:shadow-[0_0_40px_rgba(37,211,102,0.5)] transition-all duration-300 hover:-translate-y-0.5"
                             >
                                 <Rocket className="w-5 h-5" />
-                                Start Free Trial — It&apos;s Free
+                                Get Started for Free
                             </Link>
                         </div>
                         <div className="flex items-center justify-center gap-6 mt-8">
                             {[
                                 "No credit card",
-                                "7-day free trial",
+                                "Free Forever",
                                 "Cancel anytime",
                             ].map((t) => (
                                 <div
@@ -710,11 +744,52 @@ function CTASection() {
 }
 
 // ──────────────────────────────────────────────────────────
+// STICKY MOBILE CTA
+// ──────────────────────────────────────────────────────────
+function StickyCTA() {
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            // Show after scrolling 500px
+            setVisible(window.scrollY > 500);
+        };
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    if (!visible) return null;
+
+    return (
+        <div className="fixed bottom-6 left-4 right-4 z-[100] sm:hidden animate-in slide-in-from-bottom-10 fade-in duration-500">
+            <div className="glass-card p-4 border border-[#25D366]/30 bg-[#0a0f14]/90 shadow-[0_10px_40px_rgba(0,0,0,0.5)] flex items-center justify-between gap-4 backdrop-blur-xl">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#25D366]/10 flex items-center justify-center shrink-0 border border-[#25D366]/20">
+                        <Rocket className="w-5 h-5 text-[#25D366]" />
+                    </div>
+                    <div>
+                        <p className="text-xs font-bold text-white leading-none mb-1">Scale with AI</p>
+                        <p className="text-[10px] text-white/40 leading-none">Free Forever · Setup in 10m</p>
+                    </div>
+                </div>
+                <Link
+                    href="/signup"
+                    className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white text-xs font-bold shadow-lg shadow-[#25D366]/20 active:scale-95 transition-all"
+                >
+                    Get Started
+                </Link>
+            </div>
+        </div>
+    );
+}
+
+// ──────────────────────────────────────────────────────────
 // MAIN PAGE EXPORT
 // ──────────────────────────────────────────────────────────
 export default function LandingPage() {
     return (
-        <main>
+        <main className="relative">
+            <StructuredData />
             <HeroSection />
             <TrustedBy />
             <FeaturesOverview />
@@ -722,6 +797,7 @@ export default function LandingPage() {
             <PricingPreview />
             <Testimonials />
             <CTASection />
+            <StickyCTA />
         </main>
     );
 }

@@ -12,29 +12,54 @@ const outfit = Outfit({
   variable: "--font-outfit",
 });
 
+export const viewport = {
+  themeColor: "#25D366",
+};
+
 export const metadata: Metadata = {
-  title: "ReplyFlow AI — WhatsApp AI Sales Automation",
+  title: {
+    default: "Turant Reply — Best WhatsApp AI Sales Assistant for Indian Businesses",
+    template: "%s | Turant Reply"
+  },
+  manifest: "/manifest.json",
   description:
-    "Stop losing WhatsApp leads. ReplyFlow AI automatically replies to enquiries, recovers missed leads, and follows up with potential customers.",
+    "Automate your WhatsApp sales with Turant Reply. The #1 AI WhatsApp bot for Indian businesses to recover leads, auto-reply 24/7, and grow revenue instantly.",
   keywords: [
-    "WhatsApp automation",
-    "AI sales",
-    "lead recovery",
-    "WhatsApp CRM",
-    "business automation",
-    "ReplyFlow",
+    "WhatsApp AI assistant India",
+    "WhatsApp sales automation",
+    "best WhatsApp bot for business",
+    "lead recovery WhatsApp",
+    "WhatsApp marketing tool India",
+    "Turant Reply AI",
+    "WhatsApp CRM India"
   ],
+  authors: [{ name: "Saurabh", url: "https://turantreply.com" }],
+  creator: "Turant Reply Team",
+  publisher: "Turant Reply",
   openGraph: {
-    title: "ReplyFlow AI — WhatsApp AI Sales Automation",
+    title: "Turant Reply — WhatsApp AI Sales Automation",
     description:
-      "Hire an AI Sales Employee that replies instantly and converts chats into customers.",
+      "Hire an AI Sales Employee that replies instantly and converts WhatsApp chats into customers 24/7.",
+    url: "https://turantreply.com",
+    siteName: "Turant Reply",
+    locale: "en_IN",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Turant Reply — WhatsApp AI Sales Automation",
+    description: "Stop losing WhatsApp leads. Automate your sales with AI.",
+  },
+  alternates: {
+    canonical: "https://turantreply.com"
+  }
 };
 
 import ImpersonationBanner from "@/components/admin/ImpersonationBanner";
 import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
+import { Providers } from "@/components/Providers";
+import Script from "next/script";
 
 export default function RootLayout({
   children,
@@ -48,9 +73,37 @@ export default function RootLayout({
         outfit.variable,
         "font-sans antialiased bg-[#060a0f] text-white"
       )}>
+        <Script 
+          id="fb-async-init" 
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.fbAsyncInit = function() {
+                FB.init({
+                  appId: '${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}',
+                  autoLogAppEvents: true,
+                  xfbml: true,
+                  version: 'v21.0'
+                });
+              };
+            `
+          }} 
+        />
+        <Script
+          id="fb-sdk"
+          src="https://connect.facebook.net/en_US/sdk.js"
+          strategy="afterInteractive"
+        />
+        <Script
+          id="razorpay-checkout"
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="afterInteractive"
+        />
         <Toaster richColors position="top-center" />
-        <ImpersonationBanner />
-        {children}
+        <Providers>
+          <ImpersonationBanner />
+          {children}
+        </Providers>
       </body>
     </html>
   );

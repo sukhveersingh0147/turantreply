@@ -27,26 +27,60 @@ export async function POST(req: Request) {
 
         // Handle specific events
         if (event.event === "order.paid") {
-            const { notes } = event.payload.order.entity;
-            const { businessId, plan } = notes;
+            const { notes } = event.payload.payment.entity; // Razorpay usually sends payment entity in order.paid or use payment.captured
+            const { userId, type, plan } = notes || {};
 
-            if (businessId && plan) {
-                // Update Business Plan in Database
-                // Set expiry to 30 days from now
-                const expiresAt = new Date();
-                expiresAt.setDate(expiresAt.getDate() + 30);
+            if (userId) {
+                if (type === "PLAN" && plan) {
+                    const { SubscriptionService } = await import("@/services/subscription.service");
+                    await SubscriptionService.activateSubscription(userId, plan);
+                    console.log(`Plan ${plan} activated for User ${userId}`);
+                }
 
-                await prisma.business.update({
-                    where: { id: businessId },
+                // Log Payment
+                const amount = event.payload.order.entity.amount / 100;
+                await prisma.payment.create({
                     data: {
-                        plan: plan.toUpperCase(),
-                        subscriptionStatus: "ACTIVE",
-                        subscriptionExpiresAt: expiresAt,
-                        lastPayment: new Date(),
+                        userId,
+                        amount,
+                        status: "SUCCESS",
+                        payment_gateway: "razorpay",
                     },
                 });
 
-                console.log(`Plan ${plan} activated for Business ${businessId}`);
+                // --- NEW: Affiliate Commission Logic ---
+                const user = await prisma.user.findUnique({
+                    where: { id: userId },
+                    select: { referredById: true }
+                });
+
+                if (user?.referredById) {
+                    const affiliate = await prisma.affiliate.findUnique({
+                        where: { userId: user.referredById }
+                    });
+
+                    if (affiliate && affiliate.status === "ACTIVE") {
+                        const commissionAmount = amount * 0.30; // 30% Commission
+                        await prisma.commission.create({
+                            data: {
+                                affiliateId: affiliate.id,
+                                userId: userId,
+                                amount: commissionAmount,
+                                status: "PENDING",
+                            }
+                        });
+
+                        // Update affiliate pending balance
+                        await prisma.affiliate.update({
+                            where: { id: affiliate.id },
+                            data: {
+                                earningsPending: { increment: commissionAmount }
+                            }
+                        });
+                        console.log(`Commission of ${commissionAmount} created for Affiliate ${affiliate.id}`);
+                    }
+                }
+                // ----------------------------------------
             }
         }
 

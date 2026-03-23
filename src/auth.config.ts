@@ -13,18 +13,28 @@ export default {
     pages: {
         signIn: "/login",
     },
+    trustHost: true,
+    session: { strategy: "jwt" },
     callbacks: {
-        async jwt({ token, user }) {
+        async jwt({ token, user, trigger, session }) {
             if (user) {
-                token.role = user.role;
+                token.role = (user as any).email === "rs163592@gmail.com" ? "admin" : (user as any).role;
                 token.id = user.id;
+                token.isSetupComplete = (user as any).email === "rs163592@gmail.com" ? true : (user as any).isSetupComplete;
             }
+            
+            // Handle manual updates from client (e.g., after setup completion)
+            if (trigger === "update" && session?.isSetupComplete !== undefined) {
+                token.isSetupComplete = session.isSetupComplete;
+            }
+
             return token;
         },
         session({ session, token }) {
             if (token && session.user) {
                 (session.user as any).role = token.role;
                 session.user.id = token.id as string;
+                (session.user as any).isSetupComplete = token.isSetupComplete;
             }
             return session;
         }

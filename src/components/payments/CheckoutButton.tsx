@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { createCheckoutOrder, verifyPayment } from "@/app/actions/billing";
+import { SubscriptionPlan } from "@/config/subscription";
 import { Zap } from "lucide-react";
 
 interface CheckoutButtonProps {
@@ -11,6 +13,8 @@ interface CheckoutButtonProps {
     businessName: string;
     businessEmail: string;
     popular?: boolean;
+    children?: React.ReactNode;
+    className?: string;
 }
 
 declare global {
@@ -25,61 +29,71 @@ export default function CheckoutButton({
     businessName,
     businessEmail,
     popular,
+    children,
+    className,
 }: CheckoutButtonProps) {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
-    const loadRazorpay = () => {
-        return new Promise((resolve) => {
-            const script = document.createElement("script");
-            script.src = "https://checkout.razorpay.com/v1/checkout.js";
-            script.onload = () => resolve(true);
-            script.onerror = () => resolve(false);
-            document.body.appendChild(script);
-        });
-    };
 
     const handleCheckout = async () => {
         setLoading(true);
 
         try {
-            const res = await loadRazorpay();
+            // 1. Create Order using Server Action
+            const order = await createCheckoutOrder(plan as SubscriptionPlan);
 
-            if (!res) {
-                toast.error("Razorpay SDK failed to load. Are you online?");
+            if ((order as any).isMock) {
+                toast.info("Mock Mode: Simulating successful payment...");
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                const result = await verifyPayment({
+                    razorpay_order_id: (order as any).id,
+                    razorpay_payment_id: "pay_mock_" + Date.now(),
+                    razorpay_signature: "mock_signature",
+                    planKey: plan as SubscriptionPlan,
+                });
+
+                if (result.success) {
+                    toast.success("Payment Successful! Your plan is being activated.");
+                    router.push("/payment/success");
+                }
+                return; // Exit handleCheckout
+            }
+
+            // 2. Check if Razorpay is loaded
+            if (!window.Razorpay) {
+                toast.error("Razorpay SDK is still loading. Please wait a moment or refresh.");
+                setLoading(false);
                 return;
             }
 
-            // 1. Create Order
-            const response = await fetch("/api/payments/create-order", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ plan }),
-            });
-
-            if (response.status === 401) {
-                router.push("/login?callbackUrl=/pricing");
-                return;
-            }
-
-            if (!response.ok) {
-                throw new Error("Failed to create order");
-            }
-
-            const order = await response.json();
-
-            // 2. Open Razorpay Checkout
+            // 3. Open Razorpay Checkout
             const options = {
-                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, // Enter the Key ID generated from the Dashboard
+                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
                 amount: order.amount,
                 currency: order.currency,
-                name: "ReplyFlow AI",
+                name: "Turant Reply",
                 description: `${plan} Plan Subscription`,
-                image: "/logo.png", // Replace with your logo
+                image: "/turantreply-removebg.png",
                 order_id: order.id,
-                handler: function (response: any) {
-                    toast.success("Payment Successful! Your plan is being activated.");
-                    router.push("/overview?success=true");
+                handler: async function (response: any) {
+                    try {
+                        const result = await verifyPayment({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            planKey: plan as SubscriptionPlan,
+                        });
+
+                        if (result.success) {
+                            toast.success("Payment Successful!");
+                            router.push("/payment/success");
+                        }
+                    } catch (err: any) {
+                        toast.error(err.message || "Payment verification failed");
+                        router.push("/payment/failure");
+                    }
                 },
                 prefill: {
                     name: businessName,
@@ -95,6 +109,7 @@ export default function CheckoutButton({
 
             paymentObject.on("payment.failed", function (response: any) {
                 toast.error("Payment failed: " + response.error.description);
+                router.push("/payment/failure");
             });
 
         } catch (error) {
@@ -109,12 +124,13 @@ export default function CheckoutButton({
         <button
             onClick={handleCheckout}
             disabled={loading}
-            className={`block w-full text-center py-3.5 rounded-xl font-semibold text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${popular
+            className={className || `block w-full text-center py-3.5 rounded-xl font-semibold text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${popular
                 ? "bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white hover:shadow-[0_0_30px_rgba(37,211,102,0.4)] hover:-translate-y-0.5"
                 : "border border-white/15 text-white/70 hover:border-[#25D366]/40 hover:text-white hover:bg-white/5"
                 }`}
         >
-            {loading ? "Processing..." : "Start Subscription"}
+            {loading ? "Processing..." : children || "Subscribe Now"}
         </button>
     );
 }
+

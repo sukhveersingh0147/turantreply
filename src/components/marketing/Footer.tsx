@@ -6,7 +6,6 @@ const footerLinks = {
         { href: "/features", label: "Features" },
         { href: "/pricing", label: "Pricing" },
         { href: "/#how-it-works", label: "How it Works" },
-        { href: "/changelog", label: "Changelog" },
     ],
     Company: [
         { href: "/about", label: "About Us" },
@@ -27,12 +26,11 @@ export default function Footer() {
                     {/* Brand */}
                     <div className="lg:col-span-2">
                         <Link href="/" className="flex items-center gap-2 mb-4">
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#25D366] to-[#128C7E] flex items-center justify-center">
-                                <Zap className="w-4 h-4 text-white" fill="white" />
+                            <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
+                                <img src="/turantreply-removebg.png" alt="Turant Reply Logo" className="w-full h-full object-contain" />
                             </div>
                             <span className="text-xl font-bold font-[Outfit]">
-                                Reply<span className="text-gradient">Flow</span>{" "}
-                                <span className="text-[#25D366]">AI</span>
+                                Turant<span className="text-gradient">Reply</span>
                             </span>
                         </Link>
                         <p className="text-sm text-white/50 leading-relaxed max-w-xs">
@@ -40,37 +38,21 @@ export default function Footer() {
                             businesses recover leads, auto-reply, and convert enquiries into
                             paying customers.
                         </p>
-                        <div className="flex items-center gap-4 mt-6">
+                        <div className="flex flex-col gap-4 mt-6">
                             <a
-                                href="mailto:hello@replyflow.ai"
-                                className="flex items-center gap-2 text-xs text-white/50 hover:text-[#25D366] transition-colors"
+                                href="mailto:rs163592@gmail.com"
+                                className="flex items-center gap-3 text-sm text-white/50 hover:text-[#25D366] transition-colors"
                             >
-                                <Mail className="w-3.5 h-3.5" />
-                                hello@replyflow.ai
+                                <Mail className="w-4 h-4" />
+                                rs163592@gmail.com
                             </a>
                             <a
-                                href="tel:+911800000000"
-                                className="flex items-center gap-2 text-xs text-white/50 hover:text-[#25D366] transition-colors"
+                                href="tel:+919694707873"
+                                className="flex items-center gap-3 text-sm text-white/50 hover:text-[#25D366] transition-colors"
                             >
-                                <Phone className="w-3.5 h-3.5" />
-                                +91 1800-000-000
+                                <Phone className="w-4 h-4" />
+                                +91 9694707873
                             </a>
-                        </div>
-                        {/* Socials */}
-                        <div className="flex items-center gap-3 mt-5">
-                            {[
-                                { icon: Twitter, href: "#" },
-                                { icon: Linkedin, href: "#" },
-                                { icon: Github, href: "#" },
-                            ].map(({ icon: Icon, href }, i) => (
-                                <a
-                                    key={i}
-                                    href={href}
-                                    className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-[#25D366] hover:border-[#25D366]/30 transition-all"
-                                >
-                                    <Icon className="w-4 h-4" />
-                                </a>
-                            ))}
                         </div>
                     </div>
 
@@ -98,7 +80,7 @@ export default function Footer() {
 
                 <div className="mt-12 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <p className="text-xs text-white/30">
-                        © {new Date().getFullYear()} ReplyFlow AI. All rights reserved.
+                        © {new Date().getFullYear()} Turant Reply. All rights reserved.
                     </p>
                     <div className="flex items-center gap-1 text-xs text-white/30">
                         <span>Built with</span>

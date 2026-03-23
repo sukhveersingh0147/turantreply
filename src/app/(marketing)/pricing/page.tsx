@@ -3,67 +3,82 @@ import Link from "next/link";
 import { CheckCircle, X, ArrowRight, Zap } from "lucide-react";
 
 export const metadata: Metadata = {
-    title: "Pricing — ReplyFlow AI",
+    title: "Pricing Plans",
     description:
-        "Transparent pricing plans for ReplyFlow AI. Starter ₹999/month, Growth ₹2,999/month, Agency ₹9,999/month. Start free, no credit card needed.",
+        "Affordable WhatsApp AI automation plans for Indian businesses. Get started for free. Plans for Starter, Growth, and Agencies starting at ₹999/month.",
 };
 
 const plans = [
     {
+        name: "Free Forever",
+        price: 0,
+        desc: "Perfect for exploring the platform and basic automation needs.",
+        color: "border-white/5",
+        popular: false,
+        features: {
+            "Daily AI Limit": "30 Messages",
+            "Lead Recovery": "Basic",
+            "Inventory Catalog": true,
+            "Lead Management": true,
+            "Unified Dashboard": true,
+            "Broadcast Messages": false,
+            "Marketing Campaigns": false,
+            "Automation Flows": false,
+            "Support": "Community",
+        },
+    },
+    {
         name: "Starter",
         price: 999,
-        desc: "Perfect for small businesses and solopreneurs just getting started with WhatsApp automation.",
+        desc: "Unlock all features with a higher daily message limit for growing businesses.",
         color: "border-white/10",
         popular: false,
         features: {
-            "AI Auto Replies": "500/month",
-            "Leads in CRM": "100",
-            "Automation Rules": "5",
-            "Lead Recovery Engine": true,
-            "Follow-up Sequences": "1 sequence",
-            "Broadcast Messaging": false,
-            "AI GPT-4 Fallback": false,
-            Analytics: "Basic",
-            "Team Members": "1",
-            Support: "Email",
+            "Daily AI Limit": "200 Messages",
+            "Lead Recovery": "Advanced",
+            "Inventory Catalog": true,
+            "Lead Management": true,
+            "Unified Dashboard": true,
+            "Broadcast Messages": true,
+            "Marketing Campaigns": true,
+            "Automation Flows": true,
+            "Team Support": true,
         },
     },
     {
         name: "Growth",
-        price: 2999,
-        desc: "For rapidly growing businesses that need full automation, broadcasts, and AI power.",
+        price: 2499,
+        desc: "For rapidly scaling businesses that need high volume and priority handling.",
         color: "border-[#25D366]/40",
         popular: true,
         features: {
-            "AI Auto Replies": "5,000/month",
-            "Leads in CRM": "2,000",
-            "Automation Rules": "Unlimited",
-            "Lead Recovery Engine": true,
-            "Follow-up Sequences": "10 sequences",
-            "Broadcast Messaging": true,
-            "AI GPT-4 Fallback": true,
-            Analytics: "Advanced",
-            "Team Members": "5",
-            Support: "Priority Email + Chat",
+            "Daily AI Limit": "1,000 Messages",
+            "Lead Recovery": "Priority",
+            "Inventory Catalog": true,
+            "Lead Management": true,
+            "Unified Dashboard": true,
+            "Broadcast Messages": true,
+            "Marketing Campaigns": true,
+            "Automation Flows": true,
+            "Detailed Analytics": true,
         },
     },
     {
-        name: "Agency",
-        price: 9999,
-        desc: "For agencies and enterprises managing multiple WhatsApp business accounts.",
+        name: "Pro",
+        price: 4999,
+        desc: "Enterprise-grade limits and dedicated support for large scale operations.",
         color: "border-white/10",
         popular: false,
         features: {
-            "AI Auto Replies": "Unlimited",
-            "Leads in CRM": "Unlimited",
-            "Automation Rules": "Unlimited",
-            "Lead Recovery Engine": true,
-            "Follow-up Sequences": "Unlimited",
-            "Broadcast Messaging": true,
-            "AI GPT-4 Fallback": true,
-            Analytics: "Custom + Export",
-            "Team Members": "Unlimited",
-            Support: "Dedicated Manager",
+            "Daily AI Limit": "Unlimited",
+            "Lead Recovery": "Custom",
+            "Inventory Catalog": true,
+            "Lead Management": true,
+            "Unified Dashboard": true,
+            "Broadcast Messages": true,
+            "Marketing Campaigns": true,
+            "Automation Flows": true,
+            "Dedicated Manager": true,
         },
     },
 ];
@@ -71,7 +86,7 @@ const plans = [
 const faqs = [
     {
         q: "Is there a free trial?",
-        a: "Yes! All plans come with a 7-day free trial. No credit card required.",
+        a: "Yes! You can start for free. No credit card required.",
     },
     {
         q: "Can I change my plan later?",
@@ -137,7 +152,7 @@ export default async function PricingPage() {
                         <span className="text-gradient">your growth</span>
                     </h1>
                     <p className="text-lg text-white/50">
-                        Start free for 7 days. No credit card required. Cancel anytime.
+                        Get started for free. No credit card required. Cancel anytime.
                     </p>
                 </div>
             </section>
@@ -198,22 +213,29 @@ export default async function PricingPage() {
                             </ul>
 
                             {session?.user ? (
-                                <CheckoutButton
-                                    plan={plan.name.toUpperCase()}
-                                    price={plan.price}
-                                    popular={plan.popular}
-                                    businessName={business?.name || ""}
-                                    businessEmail={business?.user?.email || ""}
-                                />
+                                <div className="space-y-3">
+                                    <Link
+                                        href={`/checkout?plan=${plan.name.toUpperCase()}`}
+                                        className={`block w-full text-center py-3.5 rounded-xl font-semibold text-sm transition-all duration-300 ${plan.popular
+                                            ? "bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white hover:shadow-[0_0_30px_rgba(37,211,102,0.4)] hover:-translate-y-0.5"
+                                            : "border border-white/15 text-white/70 hover:border-[#25D366]/40 hover:text-white hover:bg-white/5"
+                                            }`}
+                                    >
+                                        Buy {plan.name} Plan
+                                    </Link>
+                                    <p className="text-[10px] text-center text-white/30">
+                                        Or continue for free
+                                    </p>
+                                </div>
                             ) : (
                                 <Link
-                                    href="/signup"
+                                    href={`/signup?plan=${plan.name.toUpperCase()}`}
                                     className={`block w-full text-center py-3.5 rounded-xl font-semibold text-sm transition-all duration-300 ${plan.popular
                                         ? "bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white hover:shadow-[0_0_30px_rgba(37,211,102,0.4)] hover:-translate-y-0.5"
                                         : "border border-white/15 text-white/70 hover:border-[#25D366]/40 hover:text-white hover:bg-white/5"
                                         }`}
                                 >
-                                    Start Free Trial
+                                    Get Started
                                 </Link>
                             )}
                         </div>
@@ -285,7 +307,7 @@ export default async function PricingPage() {
                 <div className="mt-16 text-center glass-card border border-[#25D366]/20 p-12">
                     <h2 className="text-3xl font-black font-[Outfit] mb-3">
                         Start your{" "}
-                        <span className="text-gradient">free 7-day trial</span>
+                        <span className="text-gradient">free forever</span>
                     </h2>
                     <p className="text-white/40 mb-7 text-sm">
                         No credit card required. Full access. Cancel anytime.

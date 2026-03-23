@@ -40,7 +40,7 @@ app.use("/api/analytics", analyticsRouter);
 
 // ─── Health Check ─────────────────────────────────────────
 app.get("/health", (_req: Request, res: Response) => {
-    res.json({ status: "ok", service: "ReplyFlow AI Backend", ts: new Date().toISOString() });
+    res.json({ status: "ok", service: "Turant Reply Backend", ts: new Date().toISOString() });
 });
 
 // ─── Global Error Handler ─────────────────────────────────
@@ -56,7 +56,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
         // startFollowUpWorker();
 
         app.listen(PORT, () => {
-            console.log(`🚀 ReplyFlow AI Backend running on port ${PORT}`);
+            console.log(`🚀 Turant Reply Backend running on port ${PORT}`);
         });
     } catch (error) {
         console.error("Failed to start server:", error);

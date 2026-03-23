@@ -23,28 +23,37 @@ export async function getAnalyticsData() {
         recoveredLeads,
         totalMessages,
         aiMessages,
-        leadsByDay,
-        messagesByDay,
+        recentLeads,
+        recentMessages,
+        appointmentCount,
+        recentLeadsData
     ] = await Promise.all([
         prisma.lead.count({ where: { businessId: business.id } }),
-        prisma.lead.count({ where: { businessId: business.id, status: "Recovered" } }),
+        prisma.lead.count({ where: { businessId: business.id, status: "RECOVERING" } }), // Or "RECOVERED"
         prisma.message.count({ where: { businessId: business.id } }),
-        prisma.message.count({ where: { businessId: business.id, senderType: "AI" } }),
-        prisma.lead.groupBy({
-            by: ['createdAt'],
+        prisma.message.count({ where: { businessId: business.id, senderType: { in: ["AI", "AI_FOLLOWUP"] } } }),
+        prisma.lead.findMany({
             where: {
                 businessId: business.id,
                 createdAt: { gte: sevenDaysAgo }
             },
-            _count: true
+            select: { createdAt: true, status: true }
         }),
-        prisma.message.groupBy({
-            by: ['timestamp'],
+        prisma.message.findMany({
             where: {
                 businessId: business.id,
                 timestamp: { gte: sevenDaysAgo }
             },
-            _count: true
+            select: { timestamp: true }
+        }),
+        prisma.appointment.count({
+            where: { businessId: business.id }
+        }),
+        prisma.lead.findMany({
+            where: { businessId: business.id },
+            orderBy: { updatedAt: "desc" },
+            take: 5,
+            select: { name: true, phone: true, status: true, lastQuery: true, updatedAt: true }
         })
     ]);
 
@@ -54,22 +63,16 @@ export async function getAnalyticsData() {
         const d = new Date();
         d.setDate(today.getDate() - (6 - i));
         const dayLabel = days[d.getDay()];
-
-        // Match day in DB results (approximate by date string)
         const dateStr = d.toISOString().split('T')[0];
-        const leadsCount = leadsByDay
-            .filter(ld => ld.createdAt.toISOString().split('T')[0] === dateStr)
-            .reduce((sum, item) => sum + item._count, 0);
 
-        const msgCount = messagesByDay
-            .filter(md => md.timestamp.toISOString().split('T')[0] === dateStr)
-            .reduce((sum, item) => sum + item._count, 0);
+        const dayLeads = recentLeads.filter(l => l.createdAt.toISOString().split('T')[0] === dateStr);
+        const dayMessages = recentMessages.filter(m => m.timestamp.toISOString().split('T')[0] === dateStr);
 
         return {
             day: dayLabel,
-            leads: leadsCount,
-            recovered: Math.round(leadsCount * 0.3), // Simulated for chart visuals
-            converted: Math.round(leadsCount * 0.2), // Simulated for chart visuals
+            leads: dayLeads.length,
+            recovered: dayLeads.filter(l => l.status === "RECOVERING" || l.status === "RECOVERED").length,
+            converted: dayLeads.filter(l => l.status === "CONVERTED").length,
         };
     });
 
@@ -91,18 +94,34 @@ export async function getAnalyticsData() {
         .map(([query, count]) => ({
             query,
             count,
-            pct: Math.round((count / totalLeads) * 100) || 10
+            pct: Math.round((count / (totalLeads || 1)) * 100) || 10
         }));
+
+    // Top performing items from appointments/orders
+    const topItems = await (prisma as any).item.findMany({
+        where: { businessId: business.id, isActive: true },
+        orderBy: { appointments: { _count: 'desc' } }, 
+        take: 3,
+        select: { name: true, type: true, price: true }
+    });
 
     return {
         stats: {
             totalLeads,
             recoveredLeads,
             totalMessages,
-            conversionRate: totalLeads > 0 ? ((recoveredLeads / totalLeads) * 100).toFixed(1) : "0",
+            conversionRate: totalLeads > 0 ? ((appointmentCount / totalLeads) * 100).toFixed(1) : "0",
             aiReplyRate: totalMessages > 0 ? ((aiMessages / totalMessages) * 100).toFixed(1) : "0"
         },
         weeklyData,
-        topQueries
+        topQueries,
+        recentActivity: recentLeadsData.map((l: any) => ({
+            name: l.name,
+            phone: l.phone,
+            status: l.status,
+            query: l.lastQuery,
+            time: l.updatedAt
+        })),
+        topItems
     };
 }

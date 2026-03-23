@@ -3,42 +3,54 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  role          String    @default("client") // client, admin, support_admin
-  status        String    @default("ACTIVE") // ACTIVE, SUSPENDED
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  accounts      Account[]
-  sessions      Session[]
-  business      Business?
-  adminLogs     AdminLog[]
+  id                 String              @id @default(cuid())
+  name               String?
+  email              String?             @unique
+  emailVerified      DateTime?
+  image              String?
+  password           String?
+  role               String              @default("client")
+  status             String              @default("ACTIVE")
+  isSetupComplete    Boolean             @default(true)
+  isAffiliate        Boolean             @default(false)
+  referredById       String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  accounts           Account[]
+  adminLogs          AdminLog[]
+  business           Business?
+  payments           Payment[]
+  sessions           Session[]
+  subscriptions      Subscription[]
+  notifications      Notification[]
+  pushSubscriptions  PushSubscription[]
+  affiliate          Affiliate?
+  commissions        Commission[]
+  referredUsers      User[]              @relation("UserReferrals")
+  referredBy         User?               @relation("UserReferrals", fields: [referredById], references: [id])
+  memberships        BusinessMember[]
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?  @db.Text
-  session_state      String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -60,144 +72,498 @@ model VerificationToken {
 }
 
 model Business {
-  id               String    @id @default(cuid())
-  name             String
-  industry         String?
-  description      String?
-  userId           String    @unique
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  whatsappNumber   String?
-  waToken          String?
-  waPhoneNumberId  String?
-  openaiApiKey     String?
-  aiSystemPrompt   String?
-  
-  plan             String    @default("FREE") // FREE, PRO, ENTERPRISE
-  subscriptionStatus String  @default("ACTIVE") // ACTIVE, EXPIRED, TRIAL
-  razorpayCustomerId String?
+  id                     String             @id @default(cuid())
+  name                   String
+  businessType           String?            // SERVICE, SELLING, FOOD, RENTAL, COACHING, OTHER
+  location               String?
+  workingHours           Json?              // { mon: { open: "09:00", close: "18:00" }, ... }
+  isSetupComplete        Boolean            @default(false)
+  industry               String?
+  description            String?
+  userId                 String             @unique
+  whatsappNumber         String?
+  waToken                String?
+  waPhoneNumberId        String?
+  openaiApiKey           String?
+  aiSystemPrompt         String?
+  plan                   String             @default("FREE")
+  subscriptionStatus     String             @default("ACTIVE")
+  trialEndsAt            DateTime?
+  trialConversationsToday Int                @default(0)
+  aiRepliesUsed          Int                @default(0)
+  monthlyLimit           Int                @default(30) // Based on plan
+  topupBalance           Int                @default(0)  // Purchased extra convos
+  lastLimitReset         DateTime?          @default(now())
+  razorpayCustomerId     String?
   razorpaySubscriptionId String?
-  subscriptionExpiresAt DateTime?
-  lastPayment      DateTime?
+  subscriptionExpiresAt  DateTime?
+  lastPayment            DateTime?
+  waWabaId               String?
+  knowledgeBase          String?
+  notifyOnEmergency      Boolean            @default(true)
+  notifyOnNewLead        Boolean            @default(true)
+  notifyOnAiPause        Boolean            @default(true)
   
-  // Usage tracking
-  aiRepliesUsed    Int       @default(0)
-  lastLimitReset   DateTime  @default(now())
-  knowledgeBase    String?   @db.Text
+  // New Toggles
+  autoReplyEnabled       Boolean            @default(true)
+  followUpEnabled        Boolean            @default(true)
+  autoBookingEnabled     Boolean            @default(false)
+  mediaAutoSendEnabled   Boolean            @default(true)
+  lowStockAlertsEnabled  Boolean            @default(true)
   
-  leads            Lead[]
-  automations      Automation[]
-  messages         Message[]
-  broadcasts       Broadcast[]
-  recoverySettings LeadRecovery?
-  followupSequences FollowUpSequence[]
+  // AI Smart Engine Settings
+  aiActionMode           String             @default("SUGGEST") // AUTO, SUGGEST, MANUAL
+  followUpInterval       Int                @default(24)       // Hours
+  maxFollowUps           Int                @default(2)
+  aiPersonalization      Boolean            @default(true)
   
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  // Custom Branding
+  brandingColor          String?
+  logoUrl                String?
+  
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  automations            Automation[]
+  automationRules        AutomationRule[]
+  broadcasts             Broadcast[]
+  user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  followupSequences      FollowUpSequence[]
+  leads                  Lead[]
+  recoverySettings       LeadRecovery?
+  messages               Message[]
+  whatsappAccount        WhatsAppAccount?
+  appointments           Appointment[]
+  items                  Item[]
+  mediaAssets            MediaAsset[]
+  orders                 Order[]
+  suggestions            Suggestion[]
+  flows                  Flow[]
+  campaigns              Campaign[]
+  members                BusinessMember[]
+  coupons                Coupon[]
+}
+
+model BusinessMember {
+  id         String   @id @default(cuid())
+  businessId String
+  userId     String
+  role       String   @default("AGENT") // AGENT, MANAGER
+  createdAt  DateTime @default(now())
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, userId])
+}
+
+model Suggestion {
+  id          String   @id @default(cuid())
+  businessId  String
+  leadId      String?
+  type        String   // FOLLOW_UP, STOCK_ALERT, OFFER, APPOINTMENT, ORDER
+  content     String
+  status      String   @default("PENDING") // PENDING, APPROVED, IGNORED, AUTO_EXECUTED
+  reasoning   String?
+  actionData  Json?    // { messageType, couponCode, originalScore }
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  lead        Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@index([businessId, status])
+}
+
+model Item {
+  id          String   @id @default(cuid())
+  businessId  String
+  name        String
+  type        String   // PRODUCT, SERVICE, MENU, COURSE, RENTAL
+  description String?
+  price       Float
+  stock       Int?     @default(0)
+  category    String?
+  imageUrl    String?  // Legacy
+  imageUrls   String[] @default([]) // New
+  variants    Json?    // { size: ["S", "M"], color: ["Red"] }
+  metadata    Json?    // { duration: "1h", securityDeposit: 500, startDate: "2024-01-01" }
+  isAvailable Boolean  @default(true)
+  isActive    Boolean  @default(true) 
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+}
+
+model MediaAsset {
+  id            String   @id @default(cuid())
+  businessId    String
+  name          String
+  type          String   // CATALOG, MENU, BROCHURE, OTHER
+  url           String
+  intentKeyword String?  // Trigger AI to send this asset
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id              String   @id @default(cuid())
+  businessId      String
+  customerPhone   String
+  items           Json     // [{ productId, name, price, qty }]
+  totalAmount     Float
+  status          String   @default("PENDING") // PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED
+  paymentStatus   String   @default("UNPAID")  // UNPAID, PAID
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id               String   @id @default(cuid())
+  userId           String
+  plan_name        String
+  price            Float
+  status           String   @default("active")
+  renewal_date     DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Credits removed
+
+model Payment {
+  id              String   @id @default(cuid())
+  userId          String
+  amount          Float
+  payment_gateway String   @default("razorpay")
+  status          String
+  createdAt       DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WhatsAppAccount {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  businessId      String   @unique
+  waba_id         String
+  phone_number_id      String
+  access_token         String
+  webhook_verify_token String?
+  connected_at         DateTime @default(now())
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 }
 
 model Lead {
-  id          String   @id @default(cuid())
-  businessId  String
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  phone       String
-  name        String?
-  status      String   @default("NEW")
-  lastQuery   String?
-  score       Int      @default(0)
-  isAiPaused  Boolean  @default(false)
-  
-  // Sequence tracking
+  id                 String    @id @default(cuid())
+  businessId         String
+  phone              String
+  source             String    @default("WhatsApp") // WhatsApp, Telegram
+  name               String?
+  status             String    @default("NEW")
+  leadType           String?   // Hot lead, Interested lead, Appointment booked, Information requested
+  leadStage          String?   @default("NEW") // NEW, INTERESTED, HOT, CONVERTED
+  tags               String[]  @default([])
+  customerInterest   String?   // What the customer is interested in
+  conversationSummary String?  // AI summarized conversation
+  appointmentTime    DateTime? // If an appointment is booked
+  lastQuery          String?
+  score              Int       @default(0)
+  isAiPaused         Boolean   @default(false)
   enrolledSequenceId String?
-  currentStepIndex    Int     @default(0)
-  nextFollowUpDate    DateTime?
-  recoverySentAt      DateTime?
+  currentStepIndex   Int       @default(0)
+  nextFollowUpDate   DateTime?
+  recoverySentAt     DateTime?
+  lastInteraction    DateTime? @default(now())
   
-  messages    Message[]
+  // AI Smart Tracking
+  followUpCount      Int       @default(0)
+  nextAiActionAt     DateTime?
+  lastAiActionAt     DateTime?
   
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  customFields       Json?     // Flexible metadata
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  business           Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  messages           Message[]
+  appointments       Appointment[]
+  suggestions        Suggestion[]
 
   @@unique([businessId, phone])
+  @@index([businessId, leadType])
+  @@index([businessId, status])
+  @@index([businessId, createdAt])
+  @@index([businessId, lastInteraction])
 }
 
 model LeadRecovery {
   id              String   @id @default(cuid())
   businessId      String   @unique
-  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   isEnabled       Boolean  @default(true)
   waitTimeMinutes Int      @default(30)
-  message         String   @db.Text
+  message         String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 }
 
 model FollowUpSequence {
-  id          String   @id @default(cuid())
-  businessId  String
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  name        String
-  isActive    Boolean  @default(true)
-  steps       SequenceStep[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String         @id @default(cuid())
+  businessId String
+  name       String
+  isActive   Boolean        @default(true)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  business   Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  steps      SequenceStep[]
+  itemIds    String[]       @default([])
+  couponId   String?
 }
 
 model SequenceStep {
-  id          String   @id @default(cuid())
-  sequenceId  String
-  sequence    FollowUpSequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
-  dayDelay    Int      // 1 for Day 1, 3 for Day 3, etc.
-  message     String   @db.Text
-  order       Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String           @id @default(cuid())
+  sequenceId String
+  dayDelay   Int
+  message    String
+  order      Int
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  sequence   FollowUpSequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
 }
 
 model Message {
   id          String   @id @default(cuid())
   businessId  String
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   leadId      String
-  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
   waMessageId String?  @unique
   message     String
-  sender      String   // CUSTOMER or BUSINESS
-  senderType  String   // CUSTOMER, AUTOMATION, AI
+  sender      String
+  senderType  String
   aiModel     String?
   timestamp   DateTime @default(now())
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, senderType, timestamp])
 }
 
 model Automation {
   id              String   @id @default(cuid())
   businessId      String
-  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   triggerKeyword  String
   responseMessage String
   isActive        Boolean  @default(true)
   matchCount      Int      @default(0)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 }
 
 model Broadcast {
+  id         String   @id @default(cuid())
+  businessId String
+  name       String
+  content    String
+  status     String   @default("PENDING") // PENDING, SENDING, COMPLETED, SCHEDULED
+  segment    String?  // all, new, hot, gsheets, etc.
+  sheetUrl   String?
+  scheduledAt DateTime?
+  sentCount  Int      @default(0)
+  itemIds    String[] @default([])
+  couponId   String?
+  imageUrl   String?
+  variants   CampaignVariant[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model CampaignVariant {
   id          String   @id @default(cuid())
-  businessId  String
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  name        String
+  broadcastId String
   content     String
-  status      String   @default("PENDING")
+  name        String   // Variant A, Variant B
   sentCount   Int      @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  clickCount  Int      @default(0)
+  broadcast   Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
 }
 
 model AdminLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  action    String
+  targetId  String?
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+  admin     User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+}
+
+model Inquiry {
   id          String   @id @default(cuid())
-  adminId     String
-  admin       User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  action      String   // e.g., "USER_SUSPENDED", "PLAN_UPGRADED"
-  targetId    String?  // ID of the user or business affected
-  details     String?  @db.Text
-  ipAddress   String?
+  name        String
+  email       String
+  companyName String?
+  subject     String
+  message     String
+  status      String   @default("UNREAD")
   createdAt   DateTime @default(now())
+}
+model AutomationRule {
+  id              String   @id @default(cuid())
+  businessId      String
+  name            String
+  triggerStage    String   // Hot lead, Interested lead, Appointment booked, etc.
+  delayMinutes    Int      @default(0)
+  message         String
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model Flow {
+  id          String   @id @default(cuid())
+  businessId  String
+  name        String
+  triggerType String   // KEYWORD, STAGE_CHANGE, NEW_LEAD
+  triggerValue String?  // e.g. "order", "HOT"
+  nodes       Json     // Visual nodes configuration
+  edges       Json     // Connections between nodes
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model Campaign {
+  id          String   @id @default(cuid())
+  businessId  String
+  name        String
+  description String?
+  isActive        Boolean  @default(true)
+  scheduledAt     DateTime?
+  audienceSource  String   @default("SEGMENT") // SEGMENT, TAG, SHEET
+  audienceValue   String   @default("ALL")
+  targetTags      String[] @default([])
+  couponId    String?
+  itemIds     String[] @default([]) // Selected products for carousels
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  steps       CampaignStep[]
+}
+
+model CampaignStep {
+  id          String   @id @default(cuid())
+  campaignId  String
+  order       Int
+  delayHours  Int      @default(0)
+  message     String
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+}
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  businessId  String?
+  title       String
+  message     String
+  type        String   @default("INFO") // INFO, EMERGENCY, SUCCESS, WARNING
+  link        String?
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Affiliate {
+  id              String       @id @default(cuid())
+  userId          String       @unique
+  companyName     String?
+  website         String?
+  upiId           String?      // For payouts
+  referralCode    String       @unique
+  earningsTotal   Float        @default(0)
+  earningsPaid    Float        @default(0)
+  earningsPending Float        @default(0)
+  referralsCount  Int          @default(0)
+  status          String       @default("PENDING") // PENDING, ACTIVE, DISABLED
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  commissions     Commission[]
+  payoutRequests  PayoutRequest[]
+}
+
+model Commission {
+  id          String   @id @default(cuid())
+  affiliateId String
+  userId      String   // The user who made the payment
+  paymentId   String?
+  amount      Float
+  status      String   @default("PENDING") // PENDING, APPROVED, PAID, REJECTED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PayoutRequest {
+  id          String    @id @default(cuid())
+  affiliateId String
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  amount      Float
+  upiId       String
+  status      String    @default("PENDING") // PENDING, PROCESSING, PAID, REJECTED
+  adminNotes  String?
+  paidAt      DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Appointment {
+  id          String   @id @default(cuid())
+  businessId  String
+  leadId      String
+  title       String?
+  description String?
+  startTime   DateTime
+  endTime     DateTime?
+  status      String   @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED
+  source      String   @default("AI")        // AI, MANUAL, WEB
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  itemId      String?
+  item        Item?    @relation(fields: [itemId], references: [id], onDelete: SetNull)
+
+  @@index([businessId, startTime])
+  @@index([businessId, status])
+}
+
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Coupon {
+  id          String   @id @default(cuid())
+  businessId  String
+  code        String
+  discount    Float    // Percentage
+  expiryDate  DateTime?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, code])
 }

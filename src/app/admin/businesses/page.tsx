@@ -13,7 +13,8 @@ import {
     Shield,
     Tag,
 } from "lucide-react";
-import { toggleBusinessStatus } from "@/app/actions/admin";
+import { toggleBusinessStatus, updateUserPlan } from "@/app/actions/admin";
+import Link from "next/link";
 
 export default async function AdminBusinessesPage({
     searchParams,
@@ -90,12 +91,21 @@ export default async function AdminBusinessesPage({
                                     </div>
                                 </div>
                             </div>
-                            <span className={`text-[9px] font-black px-2 py-0.5 rounded-md border tracking-widest
-                                ${business.plan === "PRO" ? "bg-orange-500/10 text-orange-400 border-orange-500/20" :
-                                    business.plan === "ENTERPRISE" ? "bg-purple-500/10 text-purple-400 border-purple-500/20" :
-                                        "bg-white/5 text-white/40 border-white/10"}`}>
-                                {business.plan}
-                            </span>
+                            <form action={async (formData) => { "use server"; await updateUserPlan(business.id, formData.get("plan") as string); }} className="flex items-center gap-1">
+                                <select 
+                                    name="plan"
+                                    defaultValue={business.plan}
+                                    className="text-[9px] font-black px-2 py-1 rounded-md border tracking-widest bg-white/5 text-white/70 border-white/10 outline-none appearance-none cursor-pointer hover:bg-white/10 transition-colors"
+                                >
+                                    <option value="FREE">FREE</option>
+                                    <option value="STARTER">STARTER</option>
+                                    <option value="GROWTH">GROWTH</option>
+                                    <option value="PRO">PRO</option>
+                                </select>
+                                <button type="submit" className="p-1 px-1.5 rounded bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors" title="Save Plan">
+                                    <Zap className="w-2.5 h-2.5" />
+                                </button>
+                            </form>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3 py-3 border-y border-white/[0.03]">
@@ -146,9 +156,9 @@ export default async function AdminBusinessesPage({
                                         <Power className="w-3.5 h-3.5" />
                                     </button>
                                 </form>
-                                <button className="p-2 rounded-lg border border-white/5 text-white/40 hover:text-white hover:bg-white/5 transition-colors" title="View Business Dashboard">
-                                    <ExternalLink className="w-3.5 h-3.5" />
-                                </button>
+                                <Link href={`/admin/businesses/${business.id}/messages`} className="p-2 rounded-lg border border-white/5 text-white/40 hover:text-white hover:bg-white/5 transition-colors" title="View Recent Messages">
+                                    <MessageSquare className="w-3.5 h-3.5" />
+                                </Link>
                                 <button className="p-2 rounded-lg border border-purple-500/10 bg-purple-500/5 text-purple-400 hover:bg-purple-500/10 transition-colors" title="Impersonate (Login as Business)">
                                     <Eye className="w-3.5 h-3.5" />
                                 </button>

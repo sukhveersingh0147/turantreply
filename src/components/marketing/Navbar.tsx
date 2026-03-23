@@ -7,6 +7,7 @@ import { Menu, X, Zap, ChevronRight } from "lucide-react";
 const navLinks = [
     { href: "/features", label: "Features" },
     { href: "/pricing", label: "Pricing" },
+    { href: "/affiliate", label: "Affiliate" },
     { href: "/about", label: "About Us" },
     { href: "/contact", label: "Contact" },
     { href: "/#how-it-works", label: "How it Works" },
@@ -33,12 +34,11 @@ export default function Navbar({ user }: { user?: any }) {
                 <div className="flex items-center justify-between">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2 group">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#25D366] to-[#128C7E] flex items-center justify-center animate-pulse-glow">
-                            <Zap className="w-4 h-4 text-white" fill="white" />
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl overflow-hidden shadow-lg border border-white/10 group-hover:scale-105 transition-transform duration-300">
+                            <img src="/turantreply-removebg.png" alt="Turant Reply AI Logo" className="w-full h-full object-cover" />
                         </div>
                         <span className="text-xl font-bold font-[Outfit]">
-                            Reply<span className="text-gradient">Flow</span>{" "}
-                            <span className="text-[#25D366]">AI</span>
+                            Turant<span className="text-gradient">Reply</span>
                         </span>
                     </Link>
 
@@ -77,7 +77,7 @@ export default function Navbar({ user }: { user?: any }) {
                                     href="/signup"
                                     className="flex items-center gap-1.5 btn-primary text-sm"
                                 >
-                                    Start Free Trial
+                                    Get Started
                                     <ChevronRight className="w-4 h-4" />
                                 </Link>
                             </>
@@ -93,51 +93,79 @@ export default function Navbar({ user }: { user?: any }) {
                     </button>
                 </div>
 
-                {/* Mobile menu */}
-                {mobileOpen && (
-                    <div className="md:hidden mt-4 pb-4 border-t border-white/10">
-                        <nav className="flex flex-col gap-1 mt-4">
+                {/* Mobile Navigation Drawer */}
+                <div
+                    className={`fixed inset-0 z-[60] md:hidden transition-all duration-300 ${mobileOpen ? "visible" : "invisible"
+                        }`}
+                >
+                    {/* Overlay */}
+                    <div
+                        className={`absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${mobileOpen ? "opacity-100" : "opacity-0"
+                            }`}
+                        onClick={() => setMobileOpen(false)}
+                    />
+
+                    {/* Drawer Content */}
+                    <div
+                        className={`absolute top-0 right-0 bottom-0 w-[280px] bg-[#0a0f14] border-l border-white/10 p-6 flex flex-col transition-transform duration-300 ease-out shadow-2xl ${mobileOpen ? "translate-x-0" : "translate-x-full"
+                            }`}
+                    >
+                        <div className="flex items-center justify-between mb-8">
+                            <Link href="/" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
+                                <img src="/turantreply-removebg.png" alt="Logo" className="w-8 h-8 rounded-lg shadow-lg border border-white/5" />
+                                <span className="text-lg font-bold font-[Outfit] text-white">Turant Reply</span>
+                            </Link>
+                            <button
+                                onClick={() => setMobileOpen(false)}
+                                className="p-2 -mr-2 rounded-lg bg-white/5 text-white/50"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <nav className="flex flex-col gap-2">
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.href}
                                     href={link.href}
                                     onClick={() => setMobileOpen(false)}
-                                    className="px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                                    className="px-4 py-3 text-base text-white/70 hover:text-[#25D366] hover:bg-white/5 rounded-xl transition-all font-medium"
                                 >
                                     {link.label}
                                 </Link>
                             ))}
-                            <div className="mt-3 flex flex-col gap-2 px-4">
-                                {user ? (
-                                    <Link
-                                        href="/overview"
-                                        onClick={() => setMobileOpen(false)}
-                                        className="text-center py-3 rounded-lg bg-gradient-to-r from-[#25D366] to-[#128C7E] text-sm font-semibold text-white"
-                                    >
-                                        Go to Dashboard
-                                    </Link>
-                                ) : (
-                                    <>
-                                        <Link
-                                            href="/login"
-                                            onClick={() => setMobileOpen(false)}
-                                            className="text-center py-3 rounded-lg border border-white/20 text-sm font-medium text-white/80 hover:bg-white/5 transition-colors"
-                                        >
-                                            Login
-                                        </Link>
-                                        <Link
-                                            href="/signup"
-                                            onClick={() => setMobileOpen(false)}
-                                            className="text-center py-3 rounded-lg bg-gradient-to-r from-[#25D366] to-[#128C7E] text-sm font-semibold text-white hover:opacity-90 transition-opacity"
-                                        >
-                                            Start Free Trial
-                                        </Link>
-                                    </>
-                                )}
-                            </div>
                         </nav>
+
+                        <div className="mt-auto pt-6 flex flex-col gap-3">
+                            {user ? (
+                                <Link
+                                    href="/overview"
+                                    onClick={() => setMobileOpen(false)}
+                                    className="w-full py-4 rounded-xl bg-gradient-to-r from-[#25D366] to-[#128C7E] text-sm font-bold text-white shadow-lg text-center"
+                                >
+                                    Go to Dashboard
+                                </Link>
+                            ) : (
+                                <>
+                                    <Link
+                                        href="/login"
+                                        onClick={() => setMobileOpen(false)}
+                                        className="w-full py-4 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold text-white text-center"
+                                    >
+                                        Login
+                                    </Link>
+                                    <Link
+                                        href="/signup"
+                                        onClick={() => setMobileOpen(false)}
+                                        className="w-full py-4 rounded-xl bg-gradient-to-r from-[#25D366] to-[#128C7E] text-sm font-bold text-white shadow-lg text-center"
+                                    >
+                                        Get Started
+                                    </Link>
+                                </>
+                            )}
+                        </div>
                     </div>
-                )}
+                </div>
             </div>
         </header>
     );

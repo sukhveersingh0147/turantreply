@@ -12,7 +12,7 @@ export async function GET(req: Request) {
     const token = searchParams.get("token");
 
     // In a real app, use an env variable for this
-    if (token !== "replyflow_cron_secret_123") {
+    if (token !== "turantreply_cron_secret_123") {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -61,16 +61,22 @@ export async function GET(req: Request) {
                         business.recoverySettings.message
                     );
 
-                    // Track message in database
-                    await prisma.message.create({
-                        data: {
-                            businessId: business.id,
-                            leadId: lead.id,
-                            message: business.recoverySettings.message,
-                            sender: "BUSINESS",
-                            senderType: "AUTOMATION"
+                    // Track message in database - Safe from P2002
+                    try {
+                        await prisma.message.create({
+                            data: {
+                                businessId: business.id,
+                                leadId: lead.id,
+                                message: business.recoverySettings.message,
+                                sender: "BUSINESS",
+                                senderType: "AUTOMATION"
+                            }
+                        });
+                    } catch (msgErr: any) {
+                        if (msgErr.code !== 'P2002') {
+                            console.error("[CRON_RECOVERY] Failed to save message:", msgErr.message);
                         }
-                    });
+                    }
 
                     // Update lead status
                     await prisma.lead.update({
@@ -135,16 +141,22 @@ export async function GET(req: Request) {
                     currentStep.message
                 );
 
-                // Track message
-                await prisma.message.create({
-                    data: {
-                        businessId: lead.businessId,
-                        leadId: lead.id,
-                        message: currentStep.message,
-                        sender: "BUSINESS",
-                        senderType: "AUTOMATION"
+                // Track message - Safe from P2002
+                try {
+                    await prisma.message.create({
+                        data: {
+                            businessId: lead.businessId,
+                            leadId: lead.id,
+                            message: currentStep.message,
+                            sender: "BUSINESS",
+                            senderType: "AUTOMATION"
+                        }
+                    });
+                } catch (msgErr: any) {
+                    if (msgErr.code !== 'P2002') {
+                        console.error("[CRON_FOLLOWUP] Failed to save message:", msgErr.message);
                     }
-                });
+                }
 
                 // Calculate next follow-up date
                 const nextStepIndex = lead.currentStepIndex + 1;

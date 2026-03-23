@@ -3,13 +3,13 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
+import { getAccessibleBusiness } from "./settings";
+
 export async function getLeadsData() {
     const session = await auth();
     if (!session?.user?.id) return { leads: [], stats: { total: 0, newToday: 0 } };
 
-    const business = await prisma.business.findUnique({
-        where: { userId: session.user.id },
-    });
+    const business = await getAccessibleBusiness();
 
     if (!business) return { leads: [], stats: { total: 0, newToday: 0 } };
 
@@ -43,15 +43,42 @@ export async function getLeadsData() {
             phone: l.phone,
             query: l.lastQuery || "No query recorded",
             status: l.status,
-            score: l.score,
+            score: l.score || 0,
             isAiPaused: l.isAiPaused,
+            interest: l.customerInterest || "Unknown",
+            stage: l.leadStage || "NEW",
+            summary: l.conversationSummary || "No summary available",
             lastMsg: l.messages[0]?.message || "No messages yet",
             time: l.updatedAt,
-            tags: l.status === "Recovered" ? ["Recovered"] : l.status === "Converted" ? ["Converted"] : ["Lead"],
+            lastInteraction: (l as any).lastInteraction,
+            source: (l as any).source || "WhatsApp",
+            tags: (l as any).tags || [],
         })),
         stats: {
             total: totalCount,
             newToday: newTodayCount,
         },
     };
+}
+export async function toggleAiPause(leadId: string) {
+    const session = await auth();
+    if (!session?.user?.id) throw new Error("Unauthorized");
+
+    const business = await getAccessibleBusiness();
+    if (!business) throw new Error("Business not found or unauthorized");
+
+    const lead = await prisma.lead.findUnique({
+        where: { id: leadId, businessId: business.id },
+    });
+
+    if (!lead) {
+        throw new Error("Lead not found or unauthorized");
+    }
+
+    const updated = await prisma.lead.update({
+        where: { id: leadId },
+        data: { isAiPaused: !lead.isAiPaused }
+    });
+
+    return updated.isAiPaused;
 }

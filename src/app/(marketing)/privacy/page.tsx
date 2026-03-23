@@ -1,4 +1,10 @@
 import Link from "next/link";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Privacy Policy",
+    description: "Read the Privacy Policy for Turant Reply AI to understand how we protect your data.",
+};
 
 export default function PrivacyPage() {
     return (
@@ -20,7 +26,7 @@ export default function PrivacyPage() {
                     <section>
                         <h2 className="text-2xl font-bold text-white mb-4 font-[Outfit]">Introduction</h2>
                         <p>
-                            Welcome to <strong>ReplyFlow AI</strong>. We value your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, and safeguard your information when you use our platform and services. By using ReplyFlow AI, you agree to the collection and use of information in accordance with this policy.
+                            Welcome to <strong>Turant Reply</strong>. We value your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, and safeguard your information when you use our platform and services. By using Turant Reply, you agree to the collection and use of information in accordance with this policy.
                         </p>
                     </section>
 
@@ -38,7 +44,7 @@ export default function PrivacyPage() {
 
                     <section>
                         <h2 className="text-2xl font-bold text-white mb-4 font-[Outfit]">How We Use Information</h2>
-                        <p className="mb-4">ReplyFlow AI uses the collected data for various purposes:</p>
+                        <p className="mb-4">Turant Reply uses the collected data for various purposes:</p>
                         <ul className="list-disc pl-6 space-y-2">
                             <li>To provide and maintain our Service.</li>
                             <li>To notify you about changes to our Service.</li>
@@ -100,7 +106,7 @@ export default function PrivacyPage() {
                     <section>
                         <h2 className="text-2xl font-bold text-white mb-4 font-[Outfit]">Contact Information</h2>
                         <p>
-                            If you have any questions about this Privacy Policy, please contact us at: <strong>support@replyflow.ai</strong>
+                            If you have any questions about this Privacy Policy, please contact us at: <strong>rs163592@gmail.com</strong>
                         </p>
                     </section>
                 </div>

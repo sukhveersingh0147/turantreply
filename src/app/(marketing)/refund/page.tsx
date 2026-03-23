@@ -1,4 +1,10 @@
 import Link from "next/link";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Refund Policy",
+    description: "Our transparent refund policy for Turant Reply AI subscriptions.",
+};
 
 export default function RefundPage() {
     return (
@@ -20,7 +26,7 @@ export default function RefundPage() {
                     <section>
                         <h2 className="text-2xl font-bold text-white mb-4 font-[Outfit]">Subscription Policy</h2>
                         <p>
-                            ReplyFlow AI offers monthly and annual subscription plans. All subscriptions are set to auto-renew unless cancelled by the user before the next billing cycle.
+                            Turant Reply offers monthly and annual subscription plans. All subscriptions are set to auto-renew unless cancelled by the user before the next billing cycle.
                         </p>
                     </section>
 
@@ -68,7 +74,7 @@ export default function RefundPage() {
                     <section>
                         <h2 className="text-2xl font-bold text-white mb-4 font-[Outfit]">Contact for Refund Requests</h2>
                         <p>
-                            For any refund-related inquiries, please email <strong>billing@replyflow.ai</strong> with your account details and the reason for the request.
+                            For any refund-related inquiries, please email <strong>rs163592@gmail.com</strong> with your account details and the reason for the request.
                         </p>
                     </section>
                 </div>

@@ -28,7 +28,7 @@ export async function startImpersonation(targetUserId: string) {
     // Set impersonation cookie
     // In a production app, this should be a signed/encrypted cookie
     const cookieStore = await cookies();
-    cookieStore.set("replyflow_impersonation_id", targetUserId, {
+    cookieStore.set("turantreply_impersonation_id", targetUserId, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
@@ -51,6 +51,6 @@ export async function startImpersonation(targetUserId: string) {
 
 export async function stopImpersonation() {
     const cookieStore = await cookies();
-    cookieStore.delete("replyflow_impersonation_id");
+    cookieStore.delete("turantreply_impersonation_id");
     redirect("/admin/dashboard");
 }

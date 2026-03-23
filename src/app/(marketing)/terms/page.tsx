@@ -1,4 +1,10 @@
 import Link from "next/link";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Terms of Service",
+    description: "The Terms of Service for using Turant Reply AI services.",
+};
 
 export default function TermsPage() {
     return (
@@ -20,7 +26,7 @@ export default function TermsPage() {
                     <section>
                         <h2 className="text-2xl font-bold text-white mb-4 font-[Outfit]">Introduction</h2>
                         <p>
-                            These Terms of Service (&quot;Terms&quot;) govern your use of <strong>ReplyFlow AI</strong>. These Terms constitute a legally binding agreement between you (&quot;User&quot;) and ReplyFlow AI.
+                            These Terms of Service (&quot;Terms&quot;) govern your use of <strong>Turant Reply</strong>. These Terms constitute a legally binding agreement between you (&quot;User&quot;) and Turant Reply.
                         </p>
                     </section>
 
@@ -68,6 +74,18 @@ export default function TermsPage() {
                     </section>
 
                     <section>
+                        <h2 className="text-2xl font-bold text-white mb-4 font-[Outfit]">WhatsApp Business Platform (Meta) Charges</h2>
+                        <p className="mb-4">
+                            In addition to our Subscription fees, the WhatsApp Business Platform (Meta) may charge fees based on your usage (e.g., conversation-based pricing).
+                        </p>
+                        <ul className="list-disc pl-6 space-y-2">
+                            <li><strong>Direct Relationship:</strong> You are responsible for maintaining a valid payment method within your Meta Business Manager.</li>
+                            <li><strong>Responsibility for Fees:</strong> All Meta-related charges are billed directly by Meta and are your sole responsibility. Turant Reply is not responsible for any Meta usage fees, currency conversion fees, or taxes applicable to your Meta account.</li>
+                            <li><strong>Service Availability:</strong> Your access to our Service may be interrupted if your Meta account is suspended due to non-payment of Meta fees.</li>
+                        </ul>
+                    </section>
+
+                    <section>
                         <h2 className="text-2xl font-bold text-white mb-4 font-[Outfit]">Termination of Accounts</h2>
                         <p>
                             We may terminate or suspend your account immediately, without prior notice or liability, for any reason, including without limitation if you breach the Terms. Upon termination, your right to use the Service will immediately cease.
@@ -77,14 +95,14 @@ export default function TermsPage() {
                     <section>
                         <h2 className="text-2xl font-bold text-white mb-4 font-[Outfit]">Limitation of Liability</h2>
                         <p>
-                            In no event shall ReplyFlow AI, nor its directors, employees, or partners, be liable for any indirect, incidental, special, consequential, or punitive damages, including loss of profits, data, or goodwill, resulting from your use of the service.
+                            In no event shall Turant Reply, nor its directors, employees, or partners, be liable for any indirect, incidental, special, consequential, or punitive damages, including loss of profits, data, or goodwill, resulting from your use of the service.
                         </p>
                     </section>
 
                     <section>
                         <h2 className="text-2xl font-bold text-white mb-4 font-[Outfit]">Intellectual Property</h2>
                         <p>
-                            The Service and its original content, features, and functionality are and will remain the exclusive property of ReplyFlow AI and its licensors.
+                            The Service and its original content, features, and functionality are and will remain the exclusive property of Turant Reply and its licensors.
                         </p>
                     </section>
 

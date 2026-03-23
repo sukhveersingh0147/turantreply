@@ -1,37 +1,31 @@
-export type SubscriptionPlan = "FREE" | "STARTER" | "GROWTH" | "AGENCY";
+export type SubscriptionPlan = "FREE" | "STARTER" | "GROWTH" | "PRO";
 
 export interface PlanDetails {
     name: string;
-    limit: number;
     price: number;
-    priceId?: string; // Razorpay Plan ID or Price ID
     features: string[];
 }
 
 export const SUBSCRIPTION_PLANS: Record<SubscriptionPlan, PlanDetails> = {
     FREE: {
-        name: "Free",
-        limit: 50,
+        name: "Free Forever",
         price: 0,
-        features: ["50 AI Auto-Replies", "Basic Lead Tracking", "1 WhatsApp Number"],
+        features: ["30 Daily Msg Limit", "Basic AI Auto-Reply", "Product Catalog", "Lead Management", "Unified Dashboard"],
     },
     STARTER: {
         name: "Starter",
-        limit: 500,
-        price: 999, // ₹999/month
-        features: ["500 AI Auto-Replies", "Advanced Lead CRM", "Priority Support", "Basic Analytics"],
+        price: 999,
+        features: ["200 Daily Msg Limit", "ALL FEATURES UNLOCKED", "Flow Builder Access", "Marketing Campaigns", "Unlimited Broadcasts", "Team Support"],
     },
     GROWTH: {
         name: "Growth",
-        limit: 5000,
-        price: 2999, // ₹2999/month
-        features: ["5,000 AI Auto-Replies", "Bulk Broadcasts", "Follow-up Automation", "Detailed Analytics"],
+        price: 2499,
+        features: ["1,000 Daily Msg Limit", "Everything in Starter", "Advanced AI Insights", "Detailed Analytics", "Priority Support"],
     },
-    AGENCY: {
-        name: "Agency",
-        limit: 1000000, // Unlimited-ish
-        price: 9999, // ₹9999/month
-        features: ["Unlimited AI Auto-Replies", "Multi-Agent Support", "White-label Dashboard", "API Access"],
+    PRO: {
+        name: "Pro",
+        price: 4999,
+        features: ["UNLIMITED Daily Msgs", "Everything in Growth", "Dedicated Manager", "Custom Integrations", "Full White-label"],
     },
 };
 

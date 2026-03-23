@@ -1,0 +1,16 @@
+{
+  "name": "TurantReply AI",
+  "short_name": "TurantReply",
+  "description": "AI-powered WhatsApp Automation & Sales Growth",
+  "start_url": "/overview",
+  "display": "standalone",
+  "background_color": "#060a0f",
+  "theme_color": "#25D366",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}

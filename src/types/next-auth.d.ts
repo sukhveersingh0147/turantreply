@@ -6,6 +6,7 @@ declare module "next-auth" {
             id: string;
             role: string;
             status: string;
+            isSetupComplete: boolean;
             impersonating?: boolean;
             originalAdminId?: string;
             targetUserId?: string;
@@ -15,6 +16,7 @@ declare module "next-auth" {
     interface User {
         role: string;
         status: string;
+        isSetupComplete: boolean;
     }
 }
 
@@ -23,5 +25,6 @@ declare module "next-auth/jwt" {
         id: string;
         role: string;
         status: string;
+        isSetupComplete: boolean;
     }
 }

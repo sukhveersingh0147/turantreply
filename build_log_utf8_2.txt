@@ -1,0 +1,75 @@
+﻿
+> turant-reply@0.1.0 build
+> prisma generate && next build
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+
+Γ£ö Generated Prisma Client (v5.22.0) to .\node_modules\@prisma\client in 246ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Help us improve the Prisma ORM for everyone. Share your feedback in a short 2-min survey: https://pris.ly/orm/survey/release-5-22
+
+Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+
+node.exe : ΓÜá The "middleware" 
+file convention is deprecated. 
+Please use "proxy" instead. 
+Learn more: https://nextjs.org/d
+ocs/messages/middleware-to-proxy
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~
+    + CategoryInfo          : N 
+   otSpecified: (ΓÜá The "midd  
+  le...leware-to-proxy:String   
+ ) [], RemoteException
+    + FullyQualifiedErrorId : N 
+   ativeCommandError
+ 
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 5.5s
+  Running TypeScript ...
+Failed to compile.
+
+.next/dev/types/validator.ts:206
+:39
+Type error: Cannot find module '
+../../../src/app/(dashboard)/set
+up-guide/page.js' or its 
+corresponding type declarations.
+
+[0m [90m 204 |[39m {
+ [90m 205 |[39m   type __IsExp
+ected[33m<[39m[33mSpecific[3
+9m [36mextends[39m [33mAppPag
+eConfig[39m[33m<[39m[32m"/se
+tup-guide"[39m[33m>>[39m 
+[33m=[39m [33mSpecific[39m
+[31m[1m>[22m[39m[90m 206 
+|[39m   [36mconst[39m 
+handler [33m=[39m {} 
+[36mas[39m [36mtypeof[39m [
+36mimport[39m([32m"../../../sr
+c/app/(dashboard)/setup-guide/pa
+ge.js"[39m)
+ [90m     |[39m               
+                        
+[31m[1m^[22m[39m
+ [90m 207 |[39m   type 
+__Check [33m=[39m __IsExpected
+[33m<[39m[36mtypeof[39m 
+handler[33m>[39m
+ [90m 208 |[39m   [90m// 
+@ts-ignore[39m
+ [90m 209 |[39m   type 
+__Unused [33m=[39m __Check[0m
+Next.js build worker exited 
+with code: 1 and signal: null

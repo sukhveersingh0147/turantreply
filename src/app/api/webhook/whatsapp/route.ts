@@ -7,20 +7,14 @@ import { sendWhatsAppMessage } from "@/lib/whatsapp";
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
 
-    // Meta will send these parameters
     const mode = searchParams.get("hub.mode");
     const token = searchParams.get("hub.verify_token");
     const challenge = searchParams.get("hub.challenge");
 
-    // In a real multi-tenant system, you might look up the verifyToken from the DB
-    // based on some identifier, or use a global system VERIFY_TOKEN if all users
-    // share one Facebook App. For ReplyFlow, we usually use a single App that
-    // receives all webhooks and routes them based on the incoming phone number ID.
-    const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || "replyflow_verify_token_123";
+    const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || "turantreply_verify_token_123";
 
     if (mode === "subscribe" && token === VERIFY_TOKEN) {
         console.log("WhatsApp Webhook Verified Successfully!");
-        // Meta expects the challenge string to be returned as plain text
         return new NextResponse(challenge, {
             status: 200,
             headers: {
@@ -34,25 +28,37 @@ export async function GET(req: Request) {
 
 // This is the POST endpoint where Meta will send the actual WhatsApp messages
 export async function POST(req: Request) {
+    console.log("Incoming WhatsApp Webhook POST request...");
     try {
         const body = await req.json();
+        console.log("Webhook body received.");
 
-        // Check if this is a WhatsApp status update or message event
         if (body.object === "whatsapp_business_account") {
+            console.log("Processing WhatsApp Business Account event...");
             for (const entry of body.entry) {
                 for (const change of entry.changes) {
+                    console.log(`Processing change: ${change.field}`);
                     if (change.value && change.value.messages) {
-                        // We received a message!
                         const message = change.value.messages[0];
                         const contact = change.value.contacts[0];
                         const metadata = change.value.metadata;
 
                         const phoneNumberId = metadata.phone_number_id;
-                        const from = message.from; // Customer's phone number
+                        const from = message.from; 
                         const messageId = message.id;
-                        const messageText = message.text?.body || "";
+                        let messageText = message.text?.body || "";
 
-                        console.log(`Received message from ${from} for business ${phoneNumberId}: ${messageText}`);
+                        // Handle Interactive Button Clicks
+                        if (message.type === "interactive") {
+                            const interactive = message.interactive;
+                            if (interactive.type === "button_reply") {
+                                messageText = interactive.button_reply.title;
+                            } else if (interactive.type === "list_reply") {
+                                messageText = interactive.list_reply.title;
+                            }
+                        }
+
+                        console.log(`Received message from ${from} for business ${phoneNumberId} (${message.type}): ${messageText}`);
 
                         // 1. Find which Business owns this WhatsApp Number ID
                         const business = await prisma.business.findFirst({
@@ -60,8 +66,19 @@ export async function POST(req: Request) {
                         });
 
                         if (!business) {
-                            console.error(`No business found for waPhoneNumberId: ${phoneNumberId}`);
-                            continue; // Skip this message, we don't know who it belongs to
+                            console.error(`[WEBHOOK ERROR] No business found for waPhoneNumberId: ${phoneNumberId}`);
+                            continue;
+                        }
+                        console.log(`Found business: ${business.id} - ${business.name}`);
+
+                        // 1.5. Check for message deduplication
+                        const existingMessage = await prisma.message.findUnique({
+                            where: { waMessageId: messageId }
+                        });
+
+                        if (existingMessage) {
+                            console.log(`[WEBHOOK] Message ${messageId} already processed. Skipping.`);
+                            continue;
                         }
 
                         // 2. Find or Create the Lead (Customer)
@@ -79,174 +96,96 @@ export async function POST(req: Request) {
                                 data: {
                                     businessId: business.id,
                                     phone: from,
+                                    source: "WhatsApp",
                                     name: customerName,
                                     status: "NEW",
                                     lastQuery: messageText,
                                 }
                             });
-                            console.log(`Created new lead: ${from} for business: ${business.name}`);
+                            console.log(`Created new lead: ${lead.id}`);
                         } else {
-                            // Update lead's last query and updatedAt, AND reset recovery status
                             lead = await prisma.lead.update({
                                 where: { id: lead.id },
                                 data: {
                                     lastQuery: messageText,
                                     name: lead.name === "Unknown Customer" && customerName !== "Unknown Customer" ? customerName : undefined,
-                                    recoverySentAt: null, // Lead replied, reset recovery flag
-                                    status: lead.status === "RECOVERING" ? "ENGAGED" : lead.status
+                                    recoverySentAt: null,
+                                    status: lead.status === "RECOVERING" ? "INTERESTED" : lead.status,
+                                    source: "WhatsApp", // Ensure source is set even for existing leads created before this field
                                 }
                             });
+                            console.log(`Updated existing lead: ${lead.id}`);
                         }
 
-                        // 3. Save the actual message to the database
-                        await prisma.message.create({
-                            data: {
-                                businessId: business.id,
-                                leadId: lead.id,
-                                waMessageId: messageId,
-                                message: messageText,
-                                sender: "CUSTOMER",
-                                senderType: "CUSTOMER",
-                            }
-                        });
-
-                        // 4. IF HUMAN HAS TAKEN OVER (AI IS PAUSED), STOP HERE
-                        if (lead.isAiPaused) {
-                            console.log(`Lead ${from} has AI paused. Skipping automated responses.`);
-                            continue;
-                        }
-
-                        // 5. CHECK FOR AUTOMATIONS
-                        const automations = await prisma.automation.findMany({
-                            where: {
-                                businessId: business.id,
-                                isActive: true,
-                            }
-                        });
-
-                        const matchingAutomation = automations.find(a =>
-                            messageText.toLowerCase().includes(a.triggerKeyword.toLowerCase())
-                        );
-
-                        if (matchingAutomation) {
-                            console.log(`Automation triggered for [${messageText}]: ${matchingAutomation.triggerKeyword}`);
-
-                            if (business.waToken) {
-                                const waResponse = await sendWhatsAppMessage(
-                                    phoneNumberId,
-                                    business.waToken,
-                                    from,
-                                    matchingAutomation.responseMessage
-                                );
-
-                                // Save the automation response
-                                await prisma.message.create({
-                                    data: {
-                                        businessId: business.id,
-                                        leadId: lead.id,
-                                        waMessageId: waResponse.messages[0]?.id,
-                                        message: matchingAutomation.responseMessage,
-                                        sender: "BUSINESS",
-                                        senderType: "AUTOMATION",
-                                    }
-                                });
-
-                                // Update match count
-                                await prisma.automation.update({
-                                    where: { id: matchingAutomation.id },
-                                    data: { matchCount: { increment: 1 } }
-                                });
-
-                                // Respond to Meta and skip AI
-                                continue;
+                        // 3. Save the actual message to the database (Safe from race conditions)
+                        try {
+                            await prisma.message.create({
+                                data: {
+                                    businessId: business.id,
+                                    leadId: lead.id,
+                                    waMessageId: messageId,
+                                    message: messageText,
+                                    sender: "CUSTOMER",
+                                    senderType: "CUSTOMER",
+                                }
+                            });
+                        } catch (msgErr: any) {
+                            if (msgErr.code === 'P2002') {
+                                console.log(`[WEBHOOK] Message ${messageId} already exists in DB. Proceeding.`);
+                            } else {
+                                throw msgErr;
                             }
                         }
+                        console.log("Message saved to database.");
 
-                        // 5. GENERATE AI RESPONSE
-                        // Check Plan Limits & Subscription Status
-                        const PLAN_LIMITS = {
-                            FREE: 50,
-                            STARTER: 500,
-                            GROWTH: 5000,
-                            AGENCY: 999999,
-                            ENTERPRISE: 999999,
+                        // 5. PUSH TO QUEUE FOR ASYNCHRONOUS PROCESSING (Fallback to sync if Redis is down)
+                        const { getMessageQueue, processInboundMessage } = await import("@/lib/queue");
+                        const jobData = {
+                            phoneNumberId,
+                            waToken: business.waToken || process.env.WHATSAPP_TOKEN,
+                            from,
+                            messageText,
+                            businessId: business.id,
+                            leadId: lead.id,
+                            messageId,
                         };
 
-                        const currentPlan = (business.plan || "FREE") as keyof typeof PLAN_LIMITS;
-                        const limit = PLAN_LIMITS[currentPlan] || 50;
-                        const isExpired = business.subscriptionStatus === "EXPIRED";
+                        const isVercel = !!(process.env.VERCEL || process.env.NEXT_PUBLIC_VERCEL || process.env.NOW_REGION);
+                        
+                        console.log(`[WEBHOOK] Environment Check - VERCEL: ${process.env.VERCEL}, NEXT_RUNTIME: ${process.env.NEXT_RUNTIME}`);
 
-                        if (isExpired || business.aiRepliesUsed >= limit) {
-                            console.warn(`Limit reached or expired for business ${business.id}. Plan: ${currentPlan}, Used: ${business.aiRepliesUsed}, Limit: ${limit}`);
-                            continue; // Skip AI response
-                        }
-
-                        // Fetch some history for better context (last 5 messages)
-                        const history = await prisma.message.findMany({
-                            where: { leadId: lead.id },
-                            orderBy: { timestamp: "desc" },
-                            take: 6, // Current message + 5 history
-                        });
-
-                        const conversationHistory = history
-                            .reverse()
-                            .slice(0, -1) // Exclude current message since it's passed separately
-                            .map(m => ({
-                                role: (m.sender === "CUSTOMER" ? "user" : "assistant") as "user" | "assistant",
-                                content: m.message,
-                            }));
-
-                        const aiReply = await generateAIResponse(
-                            messageText,
-                            business.aiSystemPrompt || "Be helpful and answer about the business.",
-                            conversationHistory,
-                            business.knowledgeBase || ""
-                        );
-
-                        // Increment Usage in DB
-                        await prisma.business.update({
-                            where: { id: business.id },
-                            data: { aiRepliesUsed: { increment: 1 } }
-                        });
-
-                        // 6. SEND WHATSAPP RESPONSE
-                        if (business.waToken) {
-                            try {
-                                const waResponse = await sendWhatsAppMessage(
-                                    phoneNumberId,
-                                    business.waToken,
-                                    from,
-                                    aiReply
-                                );
-
-                                // 7. Save the AI's response to the database
-                                await prisma.message.create({
-                                    data: {
-                                        businessId: business.id,
-                                        leadId: lead.id,
-                                        waMessageId: waResponse.messages[0]?.id,
-                                        message: aiReply,
-                                        sender: "BUSINESS",
-                                        senderType: "AI",
-                                        aiModel: "gpt-4o-mini",
-                                    }
-                                });
-
-                                console.log(`AI Replied to ${from}: ${aiReply}`);
-                            } catch (err) {
-                                console.error("Error sending AI reply via WhatsApp:", err);
-                            }
+                        if (isVercel) {
+                            console.log("[WEBHOOK] Vercel environment detected. Using synchronous processing.");
+                            await processInboundMessage(jobData as any);
+                            console.log("[WEBHOOK] Message processed synchronously on Vercel.");
                         } else {
-                            console.warn(`No waToken found for business ${business.id}, cannot send AI reply.`);
+                            try {
+                                const queue = getMessageQueue();
+                                if (!queue) throw new Error("Queue initialization failed (no Redis)");
+                                
+                                console.log("[WEBHOOK] Attempting to push to queue (timeout 5s)...");
+                                
+                                // Race against a 5-second timeout to prevent total function hang
+                                await Promise.race([
+                                    queue.add("whatsapp-received", jobData, {
+                                        removeOnComplete: true,
+                                        removeOnFail: false,
+                                    }),
+                                    new Promise((_, reject) => setTimeout(() => reject(new Error("Queue push timeout")), 5000))
+                                ]);
+                                
+                                console.log("[WEBHOOK] Message successfully pushed to queue.");
+                            } catch (queueError) {
+                                console.warn("[WEBHOOK] Queue unavailable or timed out, using sync fallback:", queueError instanceof Error ? queueError.message : String(queueError));
+                                await processInboundMessage(jobData as any);
+                                console.log("[WEBHOOK] Message processed synchronously as fallback.");
+                            }
                         }
                     }
                 }
             }
-
-            // Meta expects a 200 OK fast response to acknowledge receipt
             return NextResponse.json({ status: "success" }, { status: 200 });
         }
-
         return NextResponse.json({ error: "Not a WhatsApp event" }, { status: 404 });
     } catch (error) {
         console.error("Webhook POST Error:", error);

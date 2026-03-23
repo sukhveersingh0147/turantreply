@@ -94,16 +94,22 @@ export async function POST(req: Request) {
                     personalizedMsg
                 );
 
-                // Log the message
-                await prisma.message.create({
-                    data: {
-                        businessId: business.id,
-                        leadId: lead.id,
-                        message: personalizedMsg,
-                        sender: "BUSINESS",
-                        senderType: "AI", // Or maybe a new type BROADCAST
+                // Log the message - Safe from P2002
+                try {
+                    await prisma.message.create({
+                        data: {
+                            businessId: business.id,
+                            leadId: lead.id,
+                            message: personalizedMsg,
+                            sender: "BUSINESS",
+                            senderType: "AI", // Or maybe a new type BROADCAST
+                        }
+                    });
+                } catch (msgErr: any) {
+                    if (msgErr.code !== 'P2002') {
+                        console.error("[BROADCAST] Failed to save message:", msgErr.message);
                     }
-                });
+                }
 
                 successCount++;
             } catch (err) {

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Zap, ArrowLeft } from "lucide-react";
 
 export const metadata: Metadata = {
-    title: "Forgot Password — ReplyFlow AI",
+    title: "Forgot Password — Turant Reply",
 };
 
 export default function ForgotPasswordPage() {

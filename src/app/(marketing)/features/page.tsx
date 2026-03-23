@@ -15,16 +15,16 @@ import {
 import Link from "next/link";
 
 export const metadata: Metadata = {
-    title: "Features — ReplyFlow AI",
+    title: "Advanced Features",
     description:
-        "Explore all features of ReplyFlow AI: instant WhatsApp auto-replies, AI conversations, Lead CRM, Broadcast, Analytics, Lead Recovery Engine, and more.",
+        "Explore Turant Reply's powerful features: AI WhatsApp auto-replies, lead recovery engine, CRM integration, broadcast messaging, and advanced analytics for business growth.",
 };
 
 const features = [
     {
         icon: Zap,
         title: "Instant WhatsApp Auto-Replies",
-        desc: "Never let a customer wait. ReplyFlow automatically replies to inbound WhatsApp messages within milliseconds — day or night. Keyword-based triggers let you define exactly what to say for pricing questions, availability enquiries, location requests, and more.",
+        desc: "Never let a customer wait. Turant Reply automatically replies to inbound WhatsApp messages within milliseconds — day or night. Keyword-based triggers let you define exactly what to say for pricing questions, availability enquiries, location requests, and more.",
         points: [
             "Responds in under 1 second",
             "Keyword-based trigger rules",
@@ -40,7 +40,7 @@ const features = [
     {
         icon: RefreshCcw,
         title: "Lead Recovery Engine",
-        desc: "The core differentiator. If a customer sends an enquiry and your team hasn't replied within your defined window (e.g., 5 minutes), ReplyFlow automatically steps in with a friendly recovery message that re-engages the lead before they go cold.",
+        desc: "The core differentiator. If a customer sends an enquiry and your team hasn't replied within your defined window (e.g., 5 minutes), Turant Reply automatically steps in with a friendly recovery message that re-engages the lead before they go cold.",
         points: [
             "Configurable recovery time window",
             "Custom recovery message templates",
@@ -182,7 +182,7 @@ export default function FeaturesPage() {
                         <span className="text-gradient">dominate WhatsApp sales</span>
                     </h1>
                     <p className="text-lg text-white/60 max-w-2xl mx-auto">
-                        ReplyFlow gives you an entire AI sales team in one platform — from
+                        Turant Reply gives you an entire AI sales team in one platform — from
                         instant replies to lead recovery, CRM, analytics, and beyond.
                     </p>
                 </div>
@@ -238,7 +238,7 @@ export default function FeaturesPage() {
                         Ready to put all of this to work?
                     </h2>
                     <p className="text-white/50 mb-8">
-                        Start your free 7-day trial. No credit card required.
+                        Start for free. No credit card required.
                     </p>
                     <Link
                         href="/signup"
