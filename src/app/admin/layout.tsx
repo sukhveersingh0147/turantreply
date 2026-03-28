@@ -19,6 +19,7 @@ import {
     Menu,
     X,
     Shield,
+    LifeBuoy,
 } from "lucide-react";
 
 const adminNavItems = [
@@ -29,6 +30,7 @@ const adminNavItems = [
     { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/admin/affiliates", label: "Affiliates", icon: Users },
     { href: "/admin/system", label: "System Health", icon: ShieldCheck },
+    { href: "/admin/support", label: "Support Tickets", icon: LifeBuoy },
     { href: "/admin/logs", label: "Audit Logs", icon: History },
 ];
 
