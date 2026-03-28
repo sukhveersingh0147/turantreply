@@ -31,6 +31,8 @@ export async function generateAIResponse(
         currentBookings?: any[]; // [{ itemName, startTime, endTime, status }]
         customerName?: string | null;
         paymentEnabled?: boolean;
+        lastPaymentStatus?: string; // "PENDING", "PAID", "NONE"
+        lastOrderAmount?: number;
     },
     conversationHistory: { role: "user" | "assistant"; content: string }[] = []
 ) {
@@ -123,8 +125,11 @@ ${business.items.slice(0, 8).map(p => {
                     Integration Status: payment_enabled = ${business.paymentEnabled ? "true" : "false"}.
                     
                     If payment_enabled = true:
-                    - You can offer online payment options.
-                    - Example: "Would you like to pay now or later?"
+                    - Current Order Status: ${business.lastPaymentStatus || "NONE"}. ${business.lastOrderAmount ? `Amount: ₹${business.lastOrderAmount}` : ""}
+                    - If status is 'PAID': You MUST confirm payment and thank the customer.
+                    - If status is 'PENDING': You MUST NOT say "payment complete". Instead, ask them to use the payment link provided or wait for it.
+                    - Example: "I see your order is pending ₹${business.lastOrderAmount || ""}. Would you like to pay now?"
+                    - Only say "Payment complete" if status is strictly 'PAID'.
                     
                     If payment_enabled = false:
                     - You must NOT offer online payment, send links, or ask for methods.

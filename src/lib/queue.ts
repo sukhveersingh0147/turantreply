@@ -256,6 +256,12 @@ export async function processInboundMessage(data: {
 
         // REDUNDANT LIMIT CHECK REMOVED (Handled above)
 
+        // 2.9. Fetch Latest Order Status for AI context
+        const lastOrder = await prisma.order.findFirst({
+            where: { businessId, customerPhone: from },
+            orderBy: { createdAt: 'desc' }
+        });
+
         // 3. Generate AI Response and Extract Lead Data in Parallel
         const [aiResult, extractedData] = await Promise.all([
             generateAIResponse(
@@ -279,7 +285,9 @@ export async function processInboundMessage(data: {
                     currentBookings,
                     customerName: lead.name,
                     // @ts-ignore
-                    paymentEnabled: !!(business.razorpayKeyId && business.razorpayKeySecret)
+                    paymentEnabled: !!(business.razorpayKeyId && business.razorpayKeySecret),
+                    lastPaymentStatus: lastOrder?.paymentStatus || "NONE",
+                    lastOrderAmount: lastOrder?.totalAmount
                 },
                 conversationHistory
             ),
@@ -376,7 +384,11 @@ export async function processInboundMessage(data: {
             waMessageId = waResponse.messages[0]?.id;
         }
 
-        // 6. Check for Stage Change Automations
+        // 6. Normalize booking dates for later use
+        const bookingStart = extractedData.startDate ? new Date(extractedData.startDate) : (extractedData.appointmentTime ? new Date(extractedData.appointmentTime) : null);
+        const bookingEnd = extractedData.endDate ? new Date(extractedData.endDate) : (bookingStart ? new Date(bookingStart.getTime() + 60 * 60 * 1000) : null);
+
+        // 6.5. Check for Stage Change Automations
         const stageChanged = extractedData.stage && extractedData.stage !== lead.leadType;
 
         // 7. Update Lead & Business
@@ -395,8 +407,8 @@ export async function processInboundMessage(data: {
                     customerInterest: extractedData.interest || lead.customerInterest,
                     leadType: extractedData.stage || lead.leadType,
                     conversationSummary: extractedData.summary || lead.conversationSummary,
-                    appointmentTime: extractedData.startDate ? new Date(extractedData.startDate) : (extractedData.appointmentTime ? new Date(extractedData.appointmentTime) : lead.appointmentTime),
-                    status: (extractedData.stage === "Appointment booked" || extractedData.startDate) ? "CONVERTED" : lead.status,
+                    appointmentTime: bookingStart || lead.appointmentTime,
+                    status: (extractedData.stage === "Appointment booked" || bookingStart) ? "CONVERTED" : lead.status,
                     isAiPaused: isEmergency ? true : lead.isAiPaused,
                 },
             }),
@@ -404,7 +416,8 @@ export async function processInboundMessage(data: {
 
         // 7.5. Create Appointment if dates are present (GROWTH+ Plan)
         const canUseBooking = hasFeature(business, "canUseBooking");
-        if (canUseBooking && extractedData.startDate && extractedData.endDate) {
+
+        if (canUseBooking && bookingStart && bookingEnd) {
             try {
                 // Try to find matching item by ID or Name if itemId is just a name
                 let finalItemId = extractedData.itemId;
@@ -420,8 +433,8 @@ export async function processInboundMessage(data: {
                         businessId,
                         leadId,
                         itemId: finalItemId || null,
-                        startTime: new Date(extractedData.startDate),
-                        endTime: new Date(extractedData.endDate),
+                        startTime: bookingStart,
+                        endTime: bookingEnd,
                         title: `Booking: ${extractedData.interest || 'Untitled'}`,
                         status: "SCHEDULED",
                         source: "AI"
