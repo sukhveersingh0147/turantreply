@@ -125,10 +125,11 @@ ${business.items.slice(0, 8).map(p => {
                     Integration Status: payment_enabled = ${business.paymentEnabled ? "true" : "false"}.
                     
                     If payment_enabled = true:
-                    - Current Order Status: ${business.lastPaymentStatus || "NONE"}. ${business.lastOrderAmount ? `Amount: ₹${business.lastOrderAmount}` : ""}
-                    - If status is 'PAID': You MUST confirm payment and thank the customer.
-                    - If status is 'PENDING': You MUST NOT say "payment complete". Instead, ask them to use the payment link provided or wait for it.
-                    - Example: "I see your order is pending ₹${business.lastOrderAmount || ""}. Would you like to pay now?"
+                    - CURRENT ORDER STATUS: ${business.lastPaymentStatus || "NONE"}. ${business.lastOrderAmount ? `AMOUNT: ₹${business.lastOrderAmount}` : ""}
+                    - CRITICAL: You MUST NOT say "payment complete" or "payment received" if status is 'NONE', 'PENDING', or 'UNPAID'.
+                    - If status is 'PAID': Confidently thank them for the payment.
+                    - If status is 'NONE' or 'PENDING': You must assume they have NOT paid yet. Even if they say "I paid", you must politely say "I haven't received the confirmation yet, please wait a moment or check your payment link."
+                    - NEVER say payment is successful just because you are about to book or sending a link.
                     - Only say "Payment complete" if status is strictly 'PAID'.
                     
                     If payment_enabled = false:

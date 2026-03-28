@@ -98,8 +98,8 @@ export default function AdminTicketDetailPage() {
                         <div className="flex items-center gap-4 mt-2">
                             <div className="flex items-center gap-1.5 text-xs text-white/40">
                                 <User className="w-3.5 h-3.5 text-[#25D366]" />
-                                <span className="font-bold underline">{ticket.user.name}</span>
-                                <span>({ticket.user.email})</span>
+                                <span className="font-bold underline">{ticket.user?.name || "Unknown Customer"}</span>
+                                <span>({ticket.user?.email || "No email"})</span>
                             </div>
                             <span className="text-white/10">|</span>
                             <span className="text-[10px] text-white/20 font-black tracking-widest uppercase">ID: {ticket.id}</span>

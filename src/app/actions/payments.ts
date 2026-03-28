@@ -26,6 +26,10 @@ export async function createPaymentLink(data: {
         // Razorpay expects amount in paise (e.g. 1000 - 10.00)
         const amountInPaise = Math.round(amount * 100);
 
+        // Clean phone: remove non-digits, and strip leading +91 or 91 if present
+        const cleanPhone = customerPhone.replace(/\D/g, "");
+        const finalPhone = cleanPhone.startsWith("91") ? cleanPhone.substring(2) : cleanPhone;
+        
         const paymentLink = await razorpay.paymentLink.create({
             amount: amountInPaise,
             currency,
@@ -33,7 +37,7 @@ export async function createPaymentLink(data: {
             description,
             customer: {
                 name: customerName || "Customer",
-                contact: customerPhone.startsWith("+") ? customerPhone : `+91${customerPhone}`,
+                contact: `+91${finalPhone}`,
             },
             notify: {
                 sms: true,

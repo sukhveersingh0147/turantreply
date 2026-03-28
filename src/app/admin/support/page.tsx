@@ -111,8 +111,8 @@ export default function AdminSupportPage() {
                                         <div className="flex items-center gap-4 text-xs">
                                             <div className="flex items-center gap-1.5 text-white/40">
                                                 <User className="w-3.5 h-3.5" />
-                                                <span className="font-medium">{ticket.user.name || "Unknown"}</span>
-                                                <span className="text-white/10">({ticket.user.email})</span>
+                                                <span className="font-medium">{ticket.user?.name || "Unknown"}</span>
+                                                <span className="text-white/10">({ticket.user?.email || "No email"})</span>
                                             </div>
                                             <div className="flex items-center gap-1.5 text-white/40">
                                                 <Clock className="w-3.5 h-3.5" />
