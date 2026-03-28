@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { LifeBuoy, Plus, MessageCircle, Clock, CheckCircle2, AlertCircle, ArrowRight, Loader2 } from "lucide-react";
+import { LifeBuoy, Plus, MessageCircle, Clock, CheckCircle2, AlertCircle, ArrowRight, Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { getSupportTickets, createSupportTicket } from "@/app/actions/support";
 import { toast } from "sonner";
@@ -51,9 +51,14 @@ export default function SupportPage() {
     return (
         <div className="space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                    <h1 className="text-2xl font-black font-[Outfit]">Contact Support</h1>
-                    <p className="text-sm text-white/40 mt-1">Need help? Create a ticket and our team will get back to you.</p>
+                <div className="flex items-center gap-4">
+                    <Link href="/overview" className="p-2 rounded-xl bg-white/5 text-white/40 hover:text-white transition-all">
+                        <ArrowLeft className="w-5 h-5" />
+                    </Link>
+                    <div>
+                        <h1 className="text-2xl font-black font-[Outfit]">Contact Support</h1>
+                        <p className="text-sm text-white/40 mt-1">Need help? Create a ticket and our team will get back to you.</p>
+                    </div>
                 </div>
                 <button
                     onClick={() => setShowCreateModal(true)}
