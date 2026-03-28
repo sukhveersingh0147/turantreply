@@ -20,6 +20,7 @@ import Script from "next/script";
 import { toast } from "sonner";
 import { Check } from "lucide-react";
 import { WhatsAppConnect } from "./WhatsAppConnect";
+import { AIConfigAssistant } from "./AIConfigAssistant";
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -58,6 +59,9 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
         industry: business?.industry || "Fitness & Gym",
         description: business?.description || "",
         businessType: business?.businessType || "OTHER",
+        targetAudience: business?.targetAudience || "",
+        pricingDetails: business?.pricingDetails || "",
+        businessRules: business?.businessRules || "",
     });
 
     // WhatsApp Form State
@@ -80,6 +84,7 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
 
     const [aiGenerating, setAiGenerating] = useState(false);
     const [aiDraftDescription, setAiDraftDescription] = useState(business?.description || "");
+    const [showAIAssistant, setShowAIAssistant] = useState(false);
 
     const [notifData, setNotifData] = useState({
         notifyOnEmergency: business?.notifyOnEmergency ?? true,
@@ -317,7 +322,16 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
 
                 {activeTab === "business" && (
                     <div className="glass-card border border-white/5 p-6 space-y-5">
-                        <h2 className="font-bold font-[Outfit]">Business Profile</h2>
+                        <div className="flex items-center justify-between">
+                            <h2 className="font-bold font-[Outfit]">Business Profile</h2>
+                            <button 
+                                onClick={() => setShowAIAssistant(true)}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#25D366]/10 border border-[#25D366]/20 text-[10px] font-bold text-[#25D366] hover:bg-[#25D366]/20 transition-all"
+                            >
+                                <Sparkles className="w-3 h-3" />
+                                OPTIMIZE WITH AI
+                            </button>
+                        </div>
                         <div className="grid sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="text-xs font-medium text-white/50 block mb-2">Business Name</label>
@@ -394,6 +408,33 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
                                     placeholder="Enter a detailed description of your services, pricing, and locations..."
                                 />
                                 <p className="text-[10px] text-white/30 mt-1">This description is used by the AI to respond intelligently about your business.</p>
+                            </div>
+                            <div className="sm:col-span-2">
+                                <label className="text-xs font-medium text-white/50 block mb-2">Target Audience</label>
+                                <textarea
+                                    value={businessData.targetAudience}
+                                    onChange={(e) => setBusinessData({ ...businessData, targetAudience: e.target.value })}
+                                    className="input-dark h-20 resize-none"
+                                    placeholder="Describe your ideal customers..."
+                                />
+                            </div>
+                            <div className="sm:col-span-2">
+                                <label className="text-xs font-medium text-white/50 block mb-2">Pricing & Services</label>
+                                <textarea
+                                    value={businessData.pricingDetails}
+                                    onChange={(e) => setBusinessData({ ...businessData, pricingDetails: e.target.value })}
+                                    className="input-dark h-24 resize-none"
+                                    placeholder="List your products, packages and pricing..."
+                                />
+                            </div>
+                            <div className="sm:col-span-2">
+                                <label className="text-xs font-medium text-white/50 block mb-2">Business Rules & Policies</label>
+                                <textarea
+                                    value={businessData.businessRules}
+                                    onChange={(e) => setBusinessData({ ...businessData, businessRules: e.target.value })}
+                                    className="input-dark h-24 resize-none"
+                                    placeholder="Cancellation policy, refunds, booking rules..."
+                                />
                             </div>
                         </div>
                         <div className="pt-2">
@@ -852,6 +893,28 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
                     </div>
                 )}
             </div>
+
+            {showAIAssistant && (
+                <AIConfigAssistant 
+                    initialData={{
+                        name: businessData.name,
+                        businessType: businessData.businessType,
+                        description: businessData.description,
+                        targetAudience: businessData.targetAudience,
+                        pricingDetails: businessData.pricingDetails,
+                        businessRules: businessData.businessRules,
+                    }}
+                    onClose={() => setShowAIAssistant(false)}
+                    onSave={async (optimizedData) => {
+                        setBusinessData(prev => ({
+                            ...prev,
+                            ...optimizedData
+                        }));
+                        setShowAIAssistant(false);
+                        toast.success("Profile optimized! Don't forget to save changes.");
+                    }}
+                />
+            )}
         </div>
     );
 }

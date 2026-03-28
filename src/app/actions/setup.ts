@@ -10,6 +10,9 @@ export async function completeSetup(data: {
     description: string;
     location?: string;
     workingHours?: any;
+    targetAudience?: string;
+    pricingDetails?: string;
+    businessRules?: string;
 }) {
     const session = await auth();
     if (!session?.user?.id) throw new Error("Unauthorized");
@@ -32,6 +35,12 @@ export async function completeSetup(data: {
                 description: data.description,
                 location: data.location,
                 workingHours: data.workingHours,
+                // @ts-ignore
+                targetAudience: data.targetAudience,
+                // @ts-ignore
+                pricingDetails: data.pricingDetails,
+                // @ts-ignore
+                businessRules: data.businessRules,
                 isSetupComplete: true,
                 monthlyLimit: monthlyLimit,
             } as any,

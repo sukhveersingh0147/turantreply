@@ -23,6 +23,9 @@ export async function generateAIResponse(
         location?: string | null;
         aiSystemPrompt?: string | null;
         knowledgeBase?: string | null;
+        targetAudience?: string | null;
+        pricingDetails?: string | null;
+        businessRules?: string | null;
         plan: string;
         items?: any[];
         currentBookings?: any[]; // [{ itemName, startTime, endTime, status }]
@@ -59,6 +62,9 @@ export async function generateAIResponse(
                     SECTION 2 — BUSINESS CONTEXT
                     - Business Name: ${business.name}
                     - Context: ${business.description || "N/A"}
+                    - Target Audience: ${business.targetAudience || "N/A"}
+                    - Pricing & Services: ${business.pricingDetails || "N/A"}
+                    - Rules & Policies: ${business.businessRules || "N/A"}
                     - Knowledge Base: ${business.knowledgeBase || "N/A"}
                     - Working Hours: Mentioned in Knowledge Base or assume 9 AM - 6 PM if not specified.
                     

@@ -268,6 +268,12 @@ export async function processInboundMessage(data: {
                     location: (business as any).location,
                     aiSystemPrompt: business.aiSystemPrompt,
                     knowledgeBase: business.knowledgeBase,
+                    // @ts-ignore
+                    targetAudience: business.targetAudience,
+                    // @ts-ignore
+                    pricingDetails: business.pricingDetails,
+                    // @ts-ignore
+                    businessRules: business.businessRules,
                     plan: business.plan,
                     items: await (prisma as any).item.findMany({ where: { businessId, isActive: true }, take: 20 }),
                     currentBookings,
@@ -616,6 +622,12 @@ async function handleArcFollowup(data: {
                 name: lead.business.name,
                 plan: lead.business.plan,
                 customerName: lead.name,
+                // @ts-ignore
+                targetAudience: lead.business.targetAudience,
+                // @ts-ignore
+                pricingDetails: lead.business.pricingDetails,
+                // @ts-ignore
+                businessRules: lead.business.businessRules,
                 // @ts-ignore
                 paymentEnabled: !!(lead.business.razorpayKeyId && lead.business.razorpayKeySecret)
             },

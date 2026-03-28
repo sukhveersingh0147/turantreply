@@ -14,9 +14,11 @@ import {
     MapPin, 
     Layout, 
     Loader2,
-    Zap
+    Zap,
+    Sparkles
 } from "lucide-react";
 import { completeSetup } from "@/app/actions/setup";
+import { improveContentWithAI } from "@/app/actions/settings";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
@@ -48,8 +50,33 @@ export function SetupWizard() {
             fri: { open: "09:00", close: "18:00" },
             sat: { open: "10:00", close: "16:00" },
             sun: { open: "Closed", close: "Closed" },
-        }
+        },
+        targetAudience: "",
+        pricingDetails: "",
+        businessRules: "",
     });
+
+    const [improvingField, setImprovingField] = useState<string | null>(null);
+
+    const handleImprove = async (field: string) => {
+        const content = formData[field as keyof typeof formData] as string;
+        if (!content || content.length < 5) {
+            toast.error("Please enter a bit more detail first.");
+            return;
+        }
+        setImprovingField(field);
+        try {
+            const result = await improveContentWithAI(field, content, formData.businessType);
+            if (result.success && result.improvedContent) {
+                setFormData(prev => ({ ...prev, [field]: result.improvedContent || "" }));
+                toast.success("AI improved your content!");
+            }
+        } catch (err: any) {
+            toast.error("AI improvement failed");
+        } finally {
+            setImprovingField(null);
+        }
+    };
 
     const { update } = useSession();
 
@@ -133,95 +160,84 @@ export function SetupWizard() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-white/40 uppercase tracking-widest">General Description (AI will use this)</label>
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest">General Description</label>
+                                        <button 
+                                            onClick={() => handleImprove("description")}
+                                            className="text-[10px] font-bold text-[#25D366] hover:underline flex items-center gap-1"
+                                            disabled={improvingField === "description"}
+                                        >
+                                            {improvingField === "description" ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Sparkles className="w-2.5 h-2.5" />}
+                                            IMPROVE
+                                        </button>
+                                    </div>
                                     <textarea 
                                         value={formData.description}
                                         onChange={(e) => setFormData({...formData, description: e.target.value})}
                                         placeholder="Briefly explain what your business does..."
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-[#25D366] outline-none transition-all min-h-[100px]"
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-[#25D366] outline-none transition-all min-h-[80px]"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Target Audience</label>
+                                        <button 
+                                            onClick={() => handleImprove("targetAudience")}
+                                            className="text-[10px] font-bold text-[#25D366] hover:underline flex items-center gap-1"
+                                            disabled={improvingField === "targetAudience"}
+                                        >
+                                            {improvingField === "targetAudience" ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Sparkles className="w-2.5 h-2.5" />}
+                                            IMPROVE
+                                        </button>
+                                    </div>
+                                    <textarea 
+                                        value={formData.targetAudience}
+                                        onChange={(e) => setFormData({...formData, targetAudience: e.target.value})}
+                                        placeholder="e.g. Small business owners, busy parents..."
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-[#25D366] outline-none transition-all min-h-[60px]"
                                     />
                                 </div>
                             </div>
-
-                            <div className="space-y-4 p-6 rounded-2xl bg-[#25D366]/5 border border-[#25D366]/10">
-                                <h4 className="text-xs font-black uppercase tracking-widest text-[#25D366] mb-2 flex items-center gap-2">
-                                    <Zap className="w-3 h-3" /> Industry Specific Details
-                                </h4>
-                                
-                                {formData.businessType === "SERVICE" && (
-                                    <div className="space-y-4">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Services Offered</label>
-                                            <input 
-                                                placeholder="e.g. Haircut, Spa, Massage"
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none" 
-                                                onChange={(e) => setFormData({...formData, description: formData.description + " Services: " + e.target.value})}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Booking Method</label>
-                                            <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none appearance-none">
-                                                <option value="whatsapp">On WhatsApp</option>
-                                                <option value="link">External Link</option>
-                                                <option value="call">Phone Call</option>
-                                            </select>
-                                        </div>
+                            
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Pricing & Products</label>
+                                        <button 
+                                            onClick={() => handleImprove("pricingDetails")}
+                                            className="text-[10px] font-bold text-[#25D366] hover:underline flex items-center gap-1"
+                                            disabled={improvingField === "pricingDetails"}
+                                        >
+                                            {improvingField === "pricingDetails" ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Sparkles className="w-2.5 h-2.5" />}
+                                            IMPROVE
+                                        </button>
                                     </div>
-                                )}
-
-                                {formData.businessType === "SELLING" && (
-                                    <div className="space-y-4">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Product Categories</label>
-                                            <input 
-                                                placeholder="e.g. Shoes, Clothes, Electronics"
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none" 
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Delivery Info</label>
-                                            <input 
-                                                placeholder="e.g. PAN India, 3-5 Days"
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none" 
-                                            />
-                                        </div>
+                                    <textarea 
+                                        value={formData.pricingDetails}
+                                        onChange={(e) => setFormData({...formData, pricingDetails: e.target.value})}
+                                        placeholder="List your services/packages and prices..."
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-[#25D366] outline-none transition-all min-h-[100px]"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Business Rules</label>
+                                        <button 
+                                            onClick={() => handleImprove("businessRules")}
+                                            className="text-[10px] font-bold text-[#25D366] hover:underline flex items-center gap-1"
+                                            disabled={improvingField === "businessRules"}
+                                        >
+                                            {improvingField === "businessRules" ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Sparkles className="w-2.5 h-2.5" />}
+                                            IMPROVE
+                                        </button>
                                     </div>
-                                )}
-
-                                {formData.businessType === "FOOD" && (
-                                    <div className="space-y-4">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Cuisine / Shop Type</label>
-                                            <input 
-                                                placeholder="e.g. Italian, Bakery, Cloud Kitchen"
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none" 
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Order Method</label>
-                                            <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none appearance-none">
-                                                <option value="direct">Direct Order on WhatsApp</option>
-                                                <option value="swiggy">Swiggy/Zomato</option>
-                                                <option value="dinein">Dine-in Only</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {(formData.businessType === "COACHING" || formData.businessType === "OTHER") && (
-                                    <div className="space-y-4">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Key Offering</label>
-                                            <input 
-                                                placeholder="e.g. Digital Marketing Course"
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none" 
-                                            />
-                                        </div>
-                                        <div className="p-3 rounded-lg bg-white/5 border border-white/10 text-[9px] text-white/30 italic">
-                                            Our AI will prioritize these details when answering client queries.
-                                        </div>
-                                    </div>
-                                )}
+                                    <textarea 
+                                        value={formData.businessRules}
+                                        onChange={(e) => setFormData({...formData, businessRules: e.target.value})}
+                                        placeholder="e.g. 24h cancellation notice required..."
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-[#25D366] outline-none transition-all min-h-[60px]"
+                                    />
+                                </div>
                             </div>
                         </div>
 

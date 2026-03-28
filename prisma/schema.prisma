@@ -145,6 +145,11 @@ model Business {
   campaigns              Campaign[]
   members                BusinessMember[]
   coupons                Coupon[]
+  
+  // AI Config Assistant Fields
+  targetAudience         String?
+  pricingDetails         String?
+  businessRules          String?
 }
 
 model BusinessMember {

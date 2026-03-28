@@ -75,6 +75,13 @@ export class SmartEngineService {
                         Score: ${lead.score}
                         Last Interaction: ${lead.lastInteraction}
                         Summary: ${lead.conversationSummary || "None"}
+                        
+                        BUSINESS PROFILE:
+                        - Audience: ${lead.business.targetAudience || "N/A"}
+                        - Pricing: ${lead.business.pricingDetails || "N/A"}
+                        - Rules: ${lead.business.businessRules || "N/A"}
+                        - Knowledge: ${lead.business.knowledgeBase || "N/A"}
+                        
                         Follow-up Count: ${lead.followUpCount}
                         
                         Actions:

@@ -17,7 +17,15 @@ export async function getBusinessSettings() {
     return await getAccessibleBusiness();
 }
 
-export async function updateBusinessSettings(data: { name: string; industry: string; description: string; businessType: string }) {
+export async function updateBusinessSettings(data: { 
+    name: string; 
+    industry: string; 
+    description: string; 
+    businessType: string;
+    targetAudience?: string;
+    pricingDetails?: string;
+    businessRules?: string;
+}) {
     const business = await getAccessibleBusiness();
     if (!business) throw new Error("Unauthorized or Business not found");
 
@@ -29,6 +37,12 @@ export async function updateBusinessSettings(data: { name: string; industry: str
             description: data.description,
             // @ts-ignore
             businessType: data.businessType,
+            // @ts-ignore
+            targetAudience: data.targetAudience,
+            // @ts-ignore
+            pricingDetails: data.pricingDetails,
+            // @ts-ignore
+            businessRules: data.businessRules,
         },
     });
 
@@ -273,4 +287,84 @@ export async function removeTeamMember(memberId: string) {
 
     revalidatePath("/settings");
     return { success: true };
+}
+
+export async function improveContentWithAI(fieldName: string, content: string, businessType?: string) {
+    const session = await auth();
+    if (!session?.user?.id) throw new Error("Unauthorized");
+
+    const promptMap: Record<string, string> = {
+        description: "Improve this business description to be more professional and clear for an AI receptionist.",
+        targetAudience: "Refine this target audience description to help an AI assistant understand who it is talking to.",
+        pricingDetails: "Format and improve these pricing details so an AI can easily quote them to customers.",
+        businessRules: "Clarify these business rules (e.g., cancellation policy, refund policy) for an AI assistant."
+    };
+
+    const prompt = promptMap[fieldName] || "Improve this text for a business AI assistant.";
+
+    try {
+        const response = await openai.chat.completions.create({
+            model: process.env.AI_MODEL || "openai/gpt-4o-mini",
+            messages: [
+                {
+                    role: "system",
+                    content: "You are a professional business copywriter and AI configuration expert. Your goal is to improve the user's input while staying true to their original meaning. Provide ONLY the improved text, no preamble or quotes."
+                },
+                {
+                    role: "user",
+                    content: `${prompt}\n\nUser Input: ${content}${businessType ? `\nBusiness Type: ${businessType}` : ""}`
+                }
+            ],
+        });
+
+        return { success: true, improvedContent: response.choices[0].message.content?.trim() };
+    } catch (error: any) {
+        throw new Error(error.message || "AI failed to improve content");
+    }
+}
+
+export async function generateConversationPreview(data: {
+    description: string;
+    targetAudience: string;
+    pricingDetails: string;
+    businessRules: string;
+    businessType: string;
+    name: string;
+}) {
+    const session = await auth();
+    if (!session?.user?.id) throw new Error("Unauthorized");
+
+    try {
+        const response = await openai.chat.completions.create({
+            model: process.env.AI_MODEL || "openai/gpt-4o-mini",
+            messages: [
+                {
+                    role: "system",
+                    content: `You are simulating a WhatsApp conversation between a CUSTOMER and an AI RECEPTIONIST for ${data.name}.
+                    
+                    BUSINESS CONTEXT:
+                    - Type: ${data.businessType}
+                    - Description: ${data.description}
+                    - Audience: ${data.targetAudience}
+                    - Pricing: ${data.pricingDetails}
+                    - Rules: ${data.businessRules}
+                    
+                    Respond ONLY with a JSON object containing a "messages" key which is an array of message objects: {"messages": [{"role": "user", "text": "..."}, {"role": "assistant", "text": "..."}]}.
+                    Show a realistic greeting and a query about pricing or service. Generate 3-4 messages.`
+                },
+                {
+                    role: "user",
+                    content: "Generate a sample conversation preview."
+                }
+            ],
+            response_format: { type: "json_object" }
+        });
+
+        const rawContent = response.choices[0].message.content || "{}";
+        const content = JSON.parse(rawContent);
+        
+        return { success: true, messages: content.messages || [] };
+    } catch (error: any) {
+        throw new Error(error.message || "AI failed to generate preview");
+    }
 }
