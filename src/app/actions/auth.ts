@@ -49,7 +49,7 @@ export async function register(prevState: any, formData: FormData) {
                     email,
                     password: hashedPassword,
                     referredById,
-                    isSetupComplete: false,
+                    isSetupComplete: true,
                 }
             });
 

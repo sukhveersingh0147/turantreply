@@ -17,7 +17,7 @@ export class SmartEngineService {
     /**
      * Main entry point to analyze a lead and perform a smart action.
      */
-    static async processLead(leadId: string) {
+    static async processLead(leadId: string, step?: number) {
         const lead = await prisma.lead.findUnique({
             where: { id: leadId },
             include: { 
@@ -38,7 +38,7 @@ export class SmartEngineService {
         }
 
         // 1. Analyze with AI
-        const action = await this.generateSmartAction(lead);
+        const action = await this.generateSmartAction(lead, step);
         if (action.type === "NONE") return;
 
         // 2. Apply Action based on Business Mode
@@ -48,20 +48,28 @@ export class SmartEngineService {
     /**
      * Uses OpenAI to decide the best next step for a lead.
      */
-    static async generateSmartAction(lead: any): Promise<SmartActionResult> {
+    static async generateSmartAction(lead: any, step?: number): Promise<SmartActionResult> {
         try {
             const history = lead.messages.reverse().map((m: any) => ({
                 role: m.sender === "CUSTOMER" ? "user" : "assistant",
                 content: m.message
             }));
 
+            const stepContext = step === 1 
+                ? "This is the FIRST follow-up attempt (30-60 mins after silence)." 
+                : step === 2 
+                    ? "This is the SECOND and FINAL follow-up attempt (12-24 hours after silence)." 
+                    : "This is a strategic review of the conversation.";
+
             const response = await openai.chat.completions.create({
                 model: process.env.AI_MODEL || "openai/gpt-4o-mini",
                 messages: [
                     {
                         role: "system",
-                        content: `You are a Senior Sales Strategist for ${lead.business.name}.
-                        Analyze the conversation and decide the best NEXT Smart Action.
+                        content: `You are a Senior Sales Strategist and AI Receptionist for ${lead.business.name}.
+                        Analyze the conversation and decide the best NEXT Smart Action while maintaining a Polite, Helpful, and Professional personality.
+                        
+                        CONTEXT: ${stepContext}
                         
                         Lead Stage: ${lead.leadType || "NEW"}
                         Score: ${lead.score}
@@ -70,21 +78,22 @@ export class SmartEngineService {
                         Follow-up Count: ${lead.followUpCount}
                         
                         Actions:
-                        - FOLLOW_UP: Friendly check-in for silent users.
-                        - OFFER: Suggest discount or specific item if interested but hesitant.
-                        - PRIORITIZE: High intent detected (asking for price, booking, location).
-                        - REMINDER: Appointment or payment pending.
-                        - NONE: No action needed yet.
+                        - FOLLOW_UP: Friendly, natural check-in (Max 1-2).
+                        - OFFER: Suggest relevant products/services or highlights from Knowledge Base.
+                        - PRIORITIZE: Mark as "Hot lead" if high intent is detected.
+                        - REMINDER: Gentle nudge about appointments or payments.
+                        - NONE: No action needed.
                         
-                        Rules:
-                        - Max 1-2 follow-ups allowed. Stop if followUpCount >= ${lead.business.maxFollowUps}.
-                        - Messages must be short (< 2 lines), conversational, no fluff.
-                        - Match previous language (Hinglish/English/Hindi).
+                        Rules (Consistent with AI Receptionist Persona):
+                        - DO NOT be a bot. Talk naturally.
+                        - DO NOT push sales aggressively. Help -> Suggest -> Guide -> Close.
+                        - NO DIRECT ACTION: Do not auto-book; always confirm intent first.
+                        - STYLE: Max 2 lines, short and clear. Match user language (Hinglish/English/Hindi).
                         
                         Return JSON:
                         {
                             "type": "FOLLOW_UP" | "OFFER" | "PRIORITIZE" | "REMINDER" | "NONE",
-                            "message": "Suggested text",
+                            "message": "Suggested text (Wait for approval or send based on mode)",
                             "reasoning": "Internal strategic reason",
                             "priorityScore": 0-100,
                             "actionData": {}

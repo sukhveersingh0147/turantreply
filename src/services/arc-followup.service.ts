@@ -19,8 +19,7 @@ export class ArcFollowupService {
 
         if (!business) return;
 
-        // Schedule first nudge based on business interval
-        const delayHours = business.followUpInterval || 24;
+        // Schedule first nudge (30-60 mins) - Using 45 mins as sweet spot
         await queue.add(
             "arc-followup",
             {
@@ -30,10 +29,29 @@ export class ArcFollowupService {
                 phoneNumberId,
                 waToken,
                 type: "SMART_ACTION",
+                step: 1
             },
             {
-                delay: delayHours * 60 * 60 * 1000,
-                jobId: `smart-action-${leadId}`,
+                delay: 45 * 60 * 1000,
+                jobId: `smart-action-s1-${leadId}`,
+            }
+        );
+
+        // Schedule second nudge (12-24 hours) - Using 18 hours as sweet spot
+        await queue.add(
+            "arc-followup",
+            {
+                leadId,
+                businessId,
+                from,
+                phoneNumberId,
+                waToken,
+                type: "SMART_ACTION",
+                step: 2
+            },
+            {
+                delay: 18 * 60 * 60 * 1000,
+                jobId: `smart-action-s2-${leadId}`,
             }
         );
     }
@@ -79,7 +97,9 @@ export class ArcFollowupService {
         if (!queue) return; // Silent skip
 
         await Promise.all([
-            queue.remove(`smart-action-${leadId}`),
+            queue.remove(`smart-action-s1-${leadId}`),
+            queue.remove(`smart-action-s2-${leadId}`),
+            queue.remove(`smart-action-${leadId}`), // Backup cleanup
             queue.remove(`arc-1d-${leadId}`), // Cleanup legacy
             queue.remove(`arc-1h-${leadId}`), // Cleanup legacy
         ]);

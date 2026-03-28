@@ -271,7 +271,9 @@ export async function processInboundMessage(data: {
                     plan: business.plan,
                     items: await (prisma as any).item.findMany({ where: { businessId, isActive: true }, take: 20 }),
                     currentBookings,
-                    customerName: lead.name
+                    customerName: lead.name,
+                    // @ts-ignore
+                    paymentEnabled: !!(business.razorpayKeyId && business.razorpayKeySecret)
                 },
                 conversationHistory
             ),
@@ -576,13 +578,14 @@ async function handleArcFollowup(data: {
     waToken: string;
     type: "SMART_ACTION" | "POST_APPOINTMENT_FEEDBACK";
     appointmentId?: string;
+    step?: number;
 }) {
     const { leadId, type } = data;
 
     console.log(`[FOLLOWUP] Processing ${type} for lead ${leadId}`);
 
     if (type === "SMART_ACTION") {
-        await SmartEngineService.processLead(leadId);
+        await SmartEngineService.processLead(leadId, data.step);
         return;
     }
 
@@ -612,7 +615,9 @@ async function handleArcFollowup(data: {
             {
                 name: lead.business.name,
                 plan: lead.business.plan,
-                customerName: lead.name
+                customerName: lead.name,
+                // @ts-ignore
+                paymentEnabled: !!(lead.business.razorpayKeyId && lead.business.razorpayKeySecret)
             },
             conversationHistory
         );

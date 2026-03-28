@@ -105,6 +105,8 @@ export default function IntegrationsClient({ business }: { business: any }) {
     const handleManage = (id: string) => {
         if (id === "whatsapp-meta") {
             router.push("/integrations/whatsapp");
+        } else if (id === "razorpay") {
+            router.push("/integrations/razorpay");
         } else if (id === "google-sheets") {
             setView("google-sheets");
         } else {
@@ -162,7 +164,9 @@ export default function IntegrationsClient({ business }: { business: any }) {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filtered.map((integration) => {
                     const Icon = integration.icon;
-                    const isConnected = (integration.id === "whatsapp-meta" && business?.waToken && business?.waPhoneNumberId) || (integration.id === "google-sheets" && googleConnected);
+                    const isConnected = (integration.id === "whatsapp-meta" && business?.waToken && business?.waPhoneNumberId) || 
+                                       (integration.id === "razorpay" && business?.razorpayKeyId && business?.razorpayKeySecret) ||
+                                       (integration.id === "google-sheets" && googleConnected);
                     const status = isConnected ? "Connected" : integration.status;
                     
                     return (

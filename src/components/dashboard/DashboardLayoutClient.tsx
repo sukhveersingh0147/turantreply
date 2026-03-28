@@ -37,6 +37,7 @@ import {
     Tag,
     Megaphone,
     Puzzle,
+    LifeBuoy,
 } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
 import { getPlanFeatures } from "@/lib/plans";
@@ -52,11 +53,13 @@ const unifiedItems = [
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/integrations", label: "Integrations", icon: Puzzle },
     { href: "/affiliate", label: "Affiliate", icon: Users2 },
+    { href: "/support", label: "Support", icon: LifeBuoy },
     { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 const adminItems = [
     { href: "/admin/subscriptions", label: "System Subs", icon: Bell },
+    { href: "/admin/support", label: "Support Tickets", icon: LifeBuoy },
     { href: "/inquiries", label: "Inquiries", icon: Bell },
 ];
 

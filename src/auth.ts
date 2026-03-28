@@ -37,7 +37,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     where: { id: user.id },
                     data: { 
                         referredById,
-                        isSetupComplete: false
+                        isSetupComplete: true
                     }
                 });
 

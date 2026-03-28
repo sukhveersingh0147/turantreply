@@ -57,10 +57,6 @@ export default auth((req) => {
             if (role === "admin" || role === "support_admin") {
                 return Response.redirect(new URL("/admin/dashboard", nextUrl));
             }
-            const isSetupComplete = (req.auth?.user as any)?.isSetupComplete;
-            if (!isSetupComplete) {
-                return Response.redirect(new URL("/setup", nextUrl));
-            }
             return Response.redirect(new URL("/overview", nextUrl));
         }
         return undefined;
@@ -70,20 +66,6 @@ export default auth((req) => {
         return Response.redirect(new URL("/login", nextUrl));
     }
 
-    if (isLoggedIn) {
-        const isSetupComplete = (req.auth?.user as any)?.isSetupComplete;
-        const role = (req.auth?.user as any)?.role;
-        
-        // 1. Force setup for non-admins
-        if (!isSetupComplete && role !== "admin" && nextUrl.pathname !== "/setup" && !nextUrl.pathname.startsWith("/api")) {
-            return Response.redirect(new URL("/setup", nextUrl));
-        }
-        
-        // 2. Prevent setup access if already complete
-        if (isSetupComplete && nextUrl.pathname === "/setup") {
-            return Response.redirect(new URL("/overview", nextUrl));
-        }
-    }
 
     return undefined;
 });

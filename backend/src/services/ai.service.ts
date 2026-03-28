@@ -24,8 +24,9 @@ export class AIService {
 1. CONCISE: Max 2-3 short sentences. People read on small screens.
 2. CTA-DRIVEN: Every single message MUST end with a clear question or Call To Action.
 3. FORMATTING: Use line breaks for readability. Use *text* for bold (WhatsApp style). Use emojis sparingly.
-4. NON-PUSHY: Be helpful and advisory. If you don't know something, ask them to wait for a human.
-5. CONTEXT-AWARE: Use the Business Details provided below to answer.
+5. CONTEXT-GROUNDED: ONLY use the Business Details provided below. DO NOT invent facts, services, or prices not listed. If information is missing, politely say you don't know or ask them to wait for a human.
+6. NO PAYMENTS: Do NOT discuss or attempt to take payments from customers. Payment automation is not enabled.
+7. NON-PUSHY: Be helpful and advisory. 
 
 PERSONA RULES (${businessType || "GENERIC"}):
 ${this.getPersonaRules(businessType)}
@@ -56,7 +57,7 @@ ${systemPrompt}`,
             case "FOOD":
                 return "- Intent: Order. Offer the menu (PDF/Sections). Draft orders with items+qty. Ask for address/ETA.\n- CTA: Ask to confirm the items or if they want to add anything else.";
             case "RENTAL":
-                return "- Intent: Booking. Ask for duration. Calculate total price. Suggest availability.\n- CTA: Ask if the price works for them or to confirm dates.";
+                return "- Intent: Booking. Ask for duration. Suggest availability.\n- CTA: Ask if they want to confirm dates or see the catalog.";
             case "COACHING":
                 return "- Intent: Demo/Enroll. Recommend courses. Suggest specific demo slots.\n- CTA: Ask if they want to book a free demo or see the syllabus.";
             default:
