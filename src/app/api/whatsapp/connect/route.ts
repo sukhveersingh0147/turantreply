@@ -133,6 +133,30 @@ export async function POST(req: Request) {
             })
         ]);
 
+        // 5. Automate Webhook Registration with Meta
+        try {
+            const callbackUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_APP_URL;
+            if (callbackUrl && wabaId) {
+                console.log(`[WHATSAPP_CONNECT] Registering webhook for WABA: ${wabaId} with URL: ${callbackUrl}`);
+                await axios.post(
+                    `https://graph.facebook.com/${apiVersion}/${wabaId}/subscriptions`,
+                    {
+                        object: "whatsapp_business_account",
+                        callback_url: `${callbackUrl}/api/webhook`,
+                        verify_token: process.env.WHATSAPP_VERIFY_TOKEN || "turantreply_verify_token_123",
+                        fields: ["messages", "message_deliveries"]
+                    },
+                    {
+                        headers: { Authorization: `Bearer ${longLivedToken}` }
+                    }
+                );
+                console.log("[WHATSAPP_CONNECT] Webhook registration successful.");
+            }
+        } catch (webhookErr: any) {
+            console.error("[WHATSAPP_CONNECT] Webhook registration failed:", webhookErr.response?.data || webhookErr.message);
+            // Non-blocking for now, as user can still manually register in Meta panel
+        }
+
         return NextResponse.json({
             success: true,
             wabaId,
