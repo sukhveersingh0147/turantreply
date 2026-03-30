@@ -5,10 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { getAccessibleBusiness } from "./settings";
 
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID || "",
-    key_secret: process.env.RAZORPAY_KEY_SECRET || "",
-});
 
 export async function createPaymentLink(data: {
     orderId: string;
@@ -17,12 +13,36 @@ export async function createPaymentLink(data: {
     customerName: string;
     customerPhone: string;
     description: string;
+    businessId: string;
 }) {
-    const { orderId, amount, currency = "INR", customerName, customerPhone, description } = data;
+    const { orderId, amount, currency = "INR", customerName, customerPhone, description, businessId } = data;
 
     try {
-        console.log(`[PAYMENTS] Creating Razorpay payment link for Order ${orderId}`);
+        console.log(`[PAYMENTS] Creating Razorpay payment link for Order ${orderId} (Business: ${businessId})`);
         
+        // Fetch business specific keys
+        const business = await prisma.business.findUnique({
+            where: { id: businessId },
+            select: {
+                razorpayKeyId: true,
+                razorpayKeySecret: true,
+            }
+        });
+
+        if (!business?.razorpayKeyId || !business?.razorpayKeySecret) {
+            console.warn(`[PAYMENTS] Razorpay not configured for business ${businessId}. Skipping link generation.`);
+            return {
+                success: false,
+                error: "PAYMENT_SETUP_MISSING",
+            };
+        }
+
+        // Initialize Razorpay with business keys
+        const businessRazorpay = new Razorpay({
+            key_id: business.razorpayKeyId,
+            key_secret: business.razorpayKeySecret,
+        });
+
         // Razorpay expects amount in paise (e.g. 1000 - 10.00)
         const amountInPaise = Math.round(amount * 100);
 
@@ -30,7 +50,7 @@ export async function createPaymentLink(data: {
         const cleanPhone = customerPhone.replace(/\D/g, "");
         const finalPhone = cleanPhone.startsWith("91") ? cleanPhone.substring(2) : cleanPhone;
         
-        const paymentLink = await razorpay.paymentLink.create({
+        const paymentLink = await businessRazorpay.paymentLink.create({
             amount: amountInPaise,
             currency,
             accept_partial: false,
@@ -52,13 +72,11 @@ export async function createPaymentLink(data: {
             callback_method: "get",
         });
 
-        // Update order with payment link ID
-     const business = await getAccessibleBusiness();
+        // Update order status (Keep existing logic)
         await prisma.order.update({
             where: { id: orderId },
             data: { 
                 status: "CONFIRMED",
-                // Storing link ID in JSON or a new field if needed, but for now just returning it
             }
         });
 

@@ -34,11 +34,28 @@ webhookRouter.post("/", async (req: Request, res: Response) => {
             body.entry[0].changes[0].value.messages[0]
         ) {
             const phoneNumberId = body.entry[0].changes[0].value.metadata.phone_number_id;
-            const from = body.entry[0].changes[0].value.messages[0].from;
-            const msgBody = body.entry[0].changes[0].value.messages[0].text.body;
-            const waMessageId = body.entry[0].changes[0].value.messages[0].id;
+            const message = body.entry[0].changes[0].value.messages[0];
+            const from = message.from;
+            const waMessageId = message.id;
 
-            console.log(`Received message from ${from} to ${phoneNumberId}: ${msgBody}`);
+            // Robust text extraction
+            let msgBody = "";
+            if (message.type === "text") {
+                msgBody = message.text?.body || "";
+            } else if (message.type === "interactive") {
+                const interactive = message.interactive;
+                if (interactive?.type === "button_reply") {
+                    msgBody = interactive.button_reply?.title || "";
+                } else if (interactive?.type === "list_reply") {
+                    msgBody = interactive.list_reply?.title || "";
+                }
+            } else if (message.type === "image") {
+                msgBody = message.image?.caption || "[IMAGE]";
+            } else {
+                msgBody = `[${message.type.toUpperCase()}]`;
+            }
+
+            console.log(`[WEBHOOK] Received ${message.type} from ${from} to ${phoneNumberId}: ${msgBody}`);
 
             try {
                 // 1. Find Business associated with this phone number id
@@ -48,7 +65,7 @@ webhookRouter.post("/", async (req: Request, res: Response) => {
                 });
 
                 if (!business) {
-                    console.log("No business found for this phone number:", phoneNumberId);
+                    console.log(`[WEBHOOK] No business found for phone ID: ${phoneNumberId}`);
                     return res.sendStatus(200); // return 200 so FB doesn't retry
                 }
 
@@ -173,7 +190,7 @@ webhookRouter.post("/", async (req: Request, res: Response) => {
                         },
                     });
                 } else {
-                    console.log("No automation matched and AI is disabled for business", business.id);
+                    console.log(`[WEBHOOK] No automation matched and AI system prompt is missing for business ${business.id}. Skipping reply.`);
                     return res.sendStatus(200);
                 }
 

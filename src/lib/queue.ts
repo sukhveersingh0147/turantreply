@@ -335,13 +335,37 @@ export async function processInboundMessage(data: {
                     amount: amount,
                     customerName: extractedData.name || lead.name || "Customer",
                     customerPhone: from,
-                    description: `Payment for ${item?.name || extractedData.interest || 'Your Booking'}`
+                    description: `Payment for ${item?.name || extractedData.interest || 'Your Booking'}`,
+                    businessId: businessId,
                 });
 
                 if (linkResult.success) {
                     paymentLinkUrl = linkResult.short_url;
                     aiReply += `\n\n💳 *Pay here to confirm:* ${paymentLinkUrl}`;
                     console.log(`[PROCESSOR] Appended payment link: ${paymentLinkUrl}`);
+                } else if (linkResult.error === "PAYMENT_SETUP_MISSING") {
+                    // Fallback message when business hasn't setup Razorpay
+                    aiReply += `\n\nNote: Our team will contact you shortly to confirm your booking and assist with payment.`;
+                    
+                    // Notify the business owner
+                    await prisma.notification.create({
+                        data: {
+                            userId: business.userId,
+                            businessId: business.id,
+                            title: "⚠️ Action Required: Payment Setup Missing",
+                            message: `A client (${lead.name || from}) is waiting for a payment link, but your Razorpay is not setup. Go to Settings to configure it.`,
+                            type: "WARNING",
+                            link: "/settings"
+                        }
+                    });
+
+                    await sendPushNotification(business.userId, {
+                        title: "⚠️ Payment Setup Missing",
+                        body: `Customer ${lead.name || from} is waiting for a payment link. Please setup your Razorpay in Settings.`,
+                        url: `${process.env.NEXT_PUBLIC_APP_URL || ''}/settings`
+                    });
+
+                    console.log(`[PROCESSOR] Razorpay not setup for business ${businessId}. Sent notifications.`);
                 }
             } catch (payErr) {
                 console.error("[PROCESSOR] Payment link generation failed:", payErr);

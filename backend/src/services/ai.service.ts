@@ -42,8 +42,8 @@ ${systemPrompt}`,
             });
 
             return response.choices[0]?.message?.content?.trim() ?? "Sorry, I couldn't understand that.";
-        } catch (error) {
-            console.error("Error generating AI reply:", error);
+        } catch (error: any) {
+            console.error("Error generating AI reply:", error.message || error);
             return "I am currently experiencing technical difficulties. Real humans will get back to you soon.";
         }
     }
