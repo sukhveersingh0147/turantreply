@@ -28,6 +28,8 @@ import {
 import InsightPanel from "@/components/dashboard/InsightPanel";
 import AIActivityLog from "@/components/dashboard/AIActivityLog";
 import { getAIInsights } from "@/app/actions/ai-engine";
+import QuickActionsPanel from "@/components/overview/QuickActionsPanel";
+import VerticalBadge from "@/components/overview/VerticalBadge";
 
 async function getDashboardData() {
     const session = await auth();
@@ -210,10 +212,10 @@ export default async function OverviewPage() {
     const features = getPlanFeatures(data.plan);
 
     const quickActions = [
-        { label: "Flow Builder", href: "/automation", icon: Zap, color: "text-yellow-400", enabled: features.canUseCustomFlows },
-        { label: "Marketing Hub", href: "/campaigns", icon: Megaphone, color: "text-[#25D366]", enabled: features.canUseCampaigns },
-        { label: "Send Broadcast", href: "/broadcast", icon: MessageCircle, color: "text-purple-400", enabled: features.canUseBroadcast },
-        { label: "Unified Catalog", href: "/catalog", icon: Package, color: "text-blue-400", enabled: true },
+        { label: "New Lead", href: "/leads?action=new", icon: Users, color: "text-blue-400", enabled: true, description: "Add a manual contact" },
+        { label: "Book Appointment", href: "/appointments?action=new", icon: Calendar, color: "text-[#25D366]", enabled: true, description: "Schedule a session" },
+        { label: "Send Broadcast", href: "/broadcast", icon: MessageCircle, color: "text-purple-400", enabled: features.canUseBroadcast, description: "Mass WhatsApp message" },
+        { label: "AI Automation", href: "/automation", icon: Zap, color: "text-yellow-400", enabled: features.canUseCustomFlows, description: "Configure AI replies" },
     ];
 
     const dailyLimit = features.dailyLimit || 30;
@@ -241,9 +243,12 @@ export default async function OverviewPage() {
             {/* Page header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-2">
                 <div>
-                    <h1 className="text-2xl font-black font-[Outfit]">{data.businessName} Dashboard</h1>
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-2xl font-black font-[Outfit]">{data.businessName} Dashboard</h1>
+                        <VerticalBadge businessType={data.businessType} />
+                    </div>
                     <p className="text-sm text-white/40 mt-0.5">
-                        {data.businessType} Mode · {new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                        Overview & Real-time AI Performance · {new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                     </p>
                 </div>
                 {/* ... existing plan info ... */}
@@ -272,13 +277,19 @@ export default async function OverviewPage() {
             </div>
 
             {/* High Level Insights */}
-            <InsightPanel stats={{
-                hotLeads: data.hotLeads,
-                pendingReplies: data.pendingReplies,
-                followUpsSent: data.appointmentsBooked,
-                conversions: data.conversions,
-                revenue: data.revenue
-            }} />
+            <InsightPanel 
+                businessType={data.businessType}
+                stats={{
+                    hotLeads: data.hotLeads,
+                    pendingReplies: data.pendingReplies,
+                    followUpsSent: data.appointmentsBooked,
+                    conversions: data.conversions,
+                    revenue: data.revenue
+                }} 
+            />
+
+            {/* Quick Actions Section */}
+            <QuickActionsPanel businessType={data.businessType} />
 
 
             {/* Two column layout */}
@@ -421,34 +432,6 @@ export default async function OverviewPage() {
                         <p className="text-sm text-white/30 italic font-medium">No upcoming bookings found. AI is ready to schedule them for you!</p>
                     </div>
                 )}
-            </div>
-
-            {/* Quick actions */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {quickActions.map((action, i) => (
-                    <a
-                        key={i}
-                        href={action.enabled ? action.href : "/settings"}
-                        className={`glass-card border border-white/5 p-4 sm:p-6 flex flex-col items-center gap-3 text-center transition-all group ${!action.enabled ? 'opacity-50 grayscale cursor-pointer hover:grayscale-0 hover:bg-white/5' : 'hover:scale-[1.02] hover:bg-white/5'}`}
-                    >
-                        <div className={`w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors relative`}>
-                            <action.icon className={`w-5 h-5 ${action.color} group-hover:scale-110 transition-transform`} />
-                            {!action.enabled && (
-                                <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 flex items-center justify-center border-2 border-[#060a0f]">
-                                    <Sparkles className="w-2 h-2 text-white" />
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex flex-col items-center">
-                            <span className="text-xs sm:text-sm font-bold text-white/60 group-hover:text-white transition-colors">
-                                {action.label}
-                            </span>
-                            {!action.enabled && (
-                                <span className="text-[8px] font-black text-red-500 uppercase tracking-tighter mt-0.5">Upgrade to Unlock</span>
-                            )}
-                        </div>
-                    </a>
-                ))}
             </div>
         </div>
     );

@@ -43,13 +43,23 @@ export default function BroadcastPage() {
     const [selectedCouponId, setSelectedCouponId] = useState<string>("");
     const [business, setBusiness] = useState<any>(null);
     const router = useRouter();
-
-    const canUseBroadcast = business ? hasFeature(business, "canUseBroadcast") : true;
+    const [searchParams, setSearchParams] = useState<URLSearchParams | null>(null);
 
     useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        setSearchParams(params);
+        
+        const prefillMsg = params.get("prefill_message");
+        const prefillSegment = params.get("prefill_segment");
+
+        if (prefillMsg) setMsg(decodeURIComponent(prefillMsg));
+        if (prefillSegment) setSelectedSegment(prefillSegment);
+
         loadBroadcasts();
         loadMetadata();
     }, []);
+
+    const canUseBroadcast = business ? hasFeature(business, "canUseBroadcast") : true;
 
     async function loadMetadata() {
         const { getInventory } = await import("@/app/actions/inventory");

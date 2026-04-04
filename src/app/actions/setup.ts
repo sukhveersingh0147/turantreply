@@ -51,6 +51,16 @@ export async function completeSetup(data: {
         })
     ]);
 
+    // Step 2: Seed Dashboard if not already done
+    try {
+        const { SeedService } = await import("@/services/seed.service");
+        // Map the select option to our internal vertical type
+        await SeedService.seedBusinessDashboard(business.id, data.businessType as any);
+    } catch (err) {
+        console.error("Dashboard seeding failed during setup:", err);
+        // We don't fail the whole setup if seeding fails, but we log it
+    }
+
     revalidatePath("/overview");
     revalidatePath("/setup");
     

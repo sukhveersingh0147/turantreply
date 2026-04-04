@@ -12,6 +12,8 @@ import {
   ShoppingCart
 } from 'lucide-react';
 import { getAIInsights } from '@/app/actions/ai-engine';
+import { VerticalType } from '@/lib/verticals';
+import { useVerticalSetup } from '@/hooks/useVerticalSetup';
 
 export default function InsightPanel({ 
   stats = {
@@ -20,7 +22,8 @@ export default function InsightPanel({
     followUpsSent: 0,
     conversions: 0,
     revenue: 0
-  }
+  },
+  businessType = 'OTHER'
 }: { 
   stats?: {
     hotLeads: number;
@@ -28,43 +31,55 @@ export default function InsightPanel({
     followUpsSent: number;
     conversions: number | string;
     revenue: number;
-  }
+  },
+  businessType?: string;
 }) {
+  const { overviewKPIs } = useVerticalSetup(businessType);
+  
+  const kpiMap = (overviewKPIs as any[]).reduce((acc: any, kpi: any) => {
+    acc[kpi.key] = { 
+      label: kpi.label, 
+      icon: kpi.icon,
+      description: kpi.description 
+    }
+    return acc
+  }, {} as Record<string, any>);
+
   const displayStats = [
     { 
-      label: 'Revenue / Bookings', 
+      label: kpiMap["revenue"]?.label || "Revenue", 
       value: `₹${stats.revenue.toLocaleString()}`, 
-      icon: <ShoppingCart className="w-5 h-5 text-emerald-500" />, 
+      icon: kpiMap["revenue"]?.icon || <ShoppingCart className="w-5 h-5 text-emerald-500" />, 
       color: 'from-emerald-500/10 to-teal-500/10',
-      description: 'Direct sales value'
+      description: kpiMap["revenue"]?.description || 'Direct sales value'
     },
     { 
-      label: 'Hot Leads', 
+      label: kpiMap["leads"]?.label || "Leads", 
       value: stats.hotLeads || 0, 
-      icon: <Flame className="w-5 h-5 text-orange-500" />, 
+      icon: kpiMap["leads"]?.icon || <Flame className="w-5 h-5 text-orange-500" />, 
       color: 'from-orange-500/10 to-red-500/10',
-      description: 'High intent customers'
+      description: kpiMap["leads"]?.description || 'High intent customers'
     },
     { 
-      label: 'Pending Replies', 
+      label: kpiMap["pending"]?.label || "Pending", 
       value: stats.pendingReplies || 0, 
-      icon: <MessageSquare className="w-5 h-5 text-blue-500" />, 
+      icon: kpiMap["pending"]?.icon || <MessageSquare className="w-5 h-5 text-blue-500" />, 
       color: 'from-blue-500/10 to-indigo-500/10',
-      description: 'Awaiting your response'
+      description: kpiMap["pending"]?.description || 'Awaiting your response'
     },
     { 
-      label: 'Smart Follow-ups', 
+      label: kpiMap["followups"]?.label || "Followups", 
       value: stats.followUpsSent || 0, 
-      icon: <Zap className="w-5 h-5 text-purple-500" />, 
+      icon: kpiMap["followups"]?.icon || <Zap className="w-5 h-5 text-purple-500" />, 
       color: 'from-purple-500/10 to-fuchsia-500/10',
-      description: 'AI automated nudges'
+      description: kpiMap["followups"]?.description || 'AI automated nudges'
     },
     { 
-      label: 'Conversations Today', 
+      label: kpiMap["conversations_today"]?.label || "Conversions", 
       value: stats.conversions || 0, 
-      icon: <Target className="w-5 h-5 text-[#25D366]" />, 
+      icon: kpiMap["conversations_today"]?.icon || <Target className="w-5 h-5 text-[#25D366]" />, 
       color: 'from-emerald-500/10 to-[#25D366]/10',
-      description: 'Conversion opportunities'
+      description: kpiMap["conversations_today"]?.description || 'Conversion opportunities'
     }
   ];
 

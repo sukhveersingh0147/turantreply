@@ -12,6 +12,7 @@ import { uploadImage } from "@/app/actions/upload";
 import { toast } from "sonner";
 import SetupGuide from "./SetupGuide";
 import { hasFeature } from "@/lib/plans";
+import { VERTICALS, VerticalType } from "@/lib/verticals";
 
 const campaignSteps = [
     {
@@ -178,6 +179,48 @@ export default function CampaignsClient({
                     </button>
                 )}
             </div>
+
+            {/* Quick-Start Templates Section */}
+            {!isAdding && campaigns.length === 0 && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-emerald-400" />
+                        <h2 className="text-xs font-black uppercase tracking-widest text-emerald-400">Quick-Start Templates for {VERTICALS[business.businessType as VerticalType]?.name || "Your Business"}</h2>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {(VERTICALS[business.businessType as VerticalType] || VERTICALS.OTHER).campaignTemplates.map((template, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => {
+                                    if (!canUseCampaigns) {
+                                        toast.error("Upgrade to launch these templates!");
+                                        return;
+                                    }
+                                    setNewCampaign({
+                                        ...newCampaign,
+                                        name: template.name,
+                                        description: `Auto-generated ${template.name} template`
+                                    });
+                                    setSteps([{ order: 1, delayHours: 24, message: template.message }]);
+                                    setIsAdding(true);
+                                }}
+                                className="glass-card border border-white/5 p-4 text-left hover:border-emerald-500/30 transition-all group"
+                            >
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                                        <Lightbulb className="w-4 h-4" />
+                                    </div>
+                                    <ArrowRight className="w-4 h-4 text-white/10 group-hover:text-emerald-400 transition-colors" />
+                                </div>
+                                <h3 className="text-sm font-bold text-white mb-1">{template.name}</h3>
+                                <p className="text-[10px] text-white/30 line-clamp-2 italic">"{template.message}"</p>
+                            </button>
+                        ))}
+                    </div>
+                    <div className="h-4" />
+                </div>
+            )}
+
 
             {isAdding ? (
                 <div className="grid lg:grid-cols-12 gap-8 animate-in fade-in slide-in-from-top-4 duration-500">

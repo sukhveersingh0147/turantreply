@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { 
-    Briefcase, 
-    ShoppingBag, 
+    Scissors,
+    Dumbbell,
     Utensils, 
-    Key, 
+    Home, 
     GraduationCap, 
     MoreHorizontal, 
     ArrowRight, 
@@ -24,12 +24,12 @@ import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 
 const BUSINESS_TYPES = [
-    { id: "SERVICE", name: "Service Business", icon: Briefcase, desc: "Booking, appointment slots, service lists" },
-    { id: "SELLING", name: "Selling Business", icon: ShoppingBag, desc: "Product catalog, inventory, order flow" },
-    { id: "FOOD", name: "Food Business", icon: Utensils, desc: "Menu system, categories, order system" },
-    { id: "RENTAL", name: "Rental Business", icon: Key, desc: "Availability, duration, booking system" },
-    { id: "COACHING", name: "Coaching / Education", icon: GraduationCap, desc: "Course list, demo booking, lead capture" },
-    { id: "OTHER", name: "Other", icon: MoreHorizontal, desc: "Generic AI automation and lead capture" },
+    { id: "SALON", name: "Salon & Beauty", icon: Scissors, desc: "Haircut, Spa, Beauty clinics - Auto-booking" },
+    { id: "GYM", name: "Gym & Fitness", icon: Dumbbell, desc: "Fitness centers, Yoga, Personal trainers" },
+    { id: "COACHING", name: "Coaching & Tuition", icon: GraduationCap, desc: "Institutes, Tutors, Online courses" },
+    { id: "REAL_ESTATE", name: "Real Estate", icon: Home, desc: "Brokers, Developers, Property inquiries" },
+    { id: "RESTAURANT", name: "Restaurant & Cafe", icon: Utensils, desc: "Food ordering, Table reservations" },
+    { id: "OTHER", name: "Generic Business", icon: MoreHorizontal, desc: "Standard AI automation for any industry" },
 ];
 
 export function SetupWizard() {

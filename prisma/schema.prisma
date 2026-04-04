@@ -36,6 +36,10 @@ model User {
   referredBy         User?               @relation("UserReferrals", fields: [referredById], references: [id])
   memberships        BusinessMember[]
   supportTickets     SupportTicket[]
+  businessType       String?             // salon, gym, coaching, realestate, restaurant, other
+  businessName       String?
+  dashboardSeeded    Boolean             @default(false)
+  onboardingCompleted Boolean            @default(false)
 }
 
 model Account {
@@ -125,6 +129,7 @@ model Business {
   brandingColor          String?
   logoUrl                String?
   
+  dashboardSeeded        Boolean            @default(false)
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
   automations            Automation[]
@@ -238,6 +243,13 @@ model Subscription {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payuSubscriptionId String?
+  payuPaymentId     String?
+  payuOrderId       String?
+  autopayEnabled    Boolean  @default(false)
+  planId            String?  // starter, growth, agency
+  trialEndsAt       DateTime?
+  isTrialActive     Boolean  @default(false)
 }
 
 // Credits removed

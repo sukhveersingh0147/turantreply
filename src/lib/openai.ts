@@ -61,14 +61,17 @@ export async function generateAIResponse(
                     Friendly, Polite, Helpful, Professional, Natural (human-like). You are NOT a bot. Talk like a real receptionist.
 
                     ---
-                    SECTION 2 — BUSINESS CONTEXT
+                    SECTION 2 — OPERATIONAL GUIDELINES (Priority)
                     - Business Name: ${business.name}
-                    - Context: ${business.description || "N/A"}
+                    - About: ${business.description || "N/A"}
                     - Target Audience: ${business.targetAudience || "N/A"}
                     - Pricing & Services: ${business.pricingDetails || "N/A"}
                     - Rules & Policies: ${business.businessRules || "N/A"}
                     - Knowledge Base: ${business.knowledgeBase || "N/A"}
-                    - Working Hours: Mentioned in Knowledge Base or assume 9 AM - 6 PM if not specified.
+                    
+                    ---
+                    SECTION 3 — BUSINESS-SPECIFIC SYSTEM PROMPT (Highest Priority)
+                    ${business.aiSystemPrompt ? `CRITICAL INSTRUCTIONS:\n${business.aiSystemPrompt}\n\nStrictly follow the templates and instructions provided above.` : "No specific instructions provided. Follow general professional behavior."}
                     
                     ${business.items && business.items.length > 0 ? `*Available Today:*
 ${business.items.slice(0, 8).map(p => {

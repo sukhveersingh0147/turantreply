@@ -1,4 +1,4 @@
-import { SetupWizard } from "@/components/dashboard/SetupWizard";
+import VerticalOnboarding from "@/components/dashboard/VerticalOnboarding";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -7,17 +7,19 @@ export default async function SetupPage() {
     const session = await auth();
     if (!session?.user?.id) redirect("/login");
 
-    const business = await prisma.business.findUnique({
-        where: { userId: session.user.id }
+    const user = await prisma.user.findUnique({
+        where: { id: session.user.id }
     });
 
-    if (business?.isSetupComplete) {
+    if (user?.onboardingCompleted) {
         redirect("/overview");
     }
 
     return (
-        <main className="min-h-screen bg-[#060a0f] selection:bg-[#25D366]/30">
-            <SetupWizard />
+        <main className="min-h-screen bg-[#0f0f0f] selection:bg-[#25D366]/30 flex items-center justify-center">
+            <div className="w-full">
+                <VerticalOnboarding />
+            </div>
         </main>
     );
 }

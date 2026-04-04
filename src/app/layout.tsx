@@ -18,19 +18,19 @@ export const viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "Turant Reply — Best WhatsApp AI Sales Assistant for Indian Businesses",
-    template: "%s | Turant Reply"
+    default: "TurantReply — India's #1 Industry-Specific WhatsApp Automation",
+    template: "%s | TurantReply"
   },
   manifest: "/manifest.json",
   description:
-    "Automate your WhatsApp sales with Turant Reply. The #1 AI WhatsApp bot for Indian businesses to recover leads, auto-reply 24/7, and grow revenue instantly.",
+    "India's first industry-specific WhatsApp automation for local businesses. Select your vertical (Salon, Gym, Real Estate, etc.) and get your dashboard ready in 60 seconds.",
   keywords: [
-    "WhatsApp AI assistant India",
-    "WhatsApp sales automation",
-    "best WhatsApp bot for business",
-    "lead recovery WhatsApp",
-    "WhatsApp marketing tool India",
-    "Turant Reply AI",
+    "WhatsApp automation for Salon",
+    "WhatsApp bot for Gym",
+    "Real Estate WhatsApp automation",
+    "Coaching center WhatsApp bot",
+    "Restaurant WhatsApp automation",
+    "TurantReply AI",
     "WhatsApp CRM India"
   ],
   authors: [{ name: "Saurabh", url: "https://turantreply.com" }],

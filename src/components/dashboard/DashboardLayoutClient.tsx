@@ -38,14 +38,26 @@ import {
     Megaphone,
     Puzzle,
     LifeBuoy,
+    MessageCircleQuestion,
+    BellRing,
 } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
 import { getPlanFeatures } from "@/lib/plans";
 
-const unifiedItems = [
+interface SidebarItem {
+    href: string;
+    label: string;
+    icon: any;
+    badge?: "new" | "appointments" | "queries" | "reminders";
+}
+
+const unifiedItems: SidebarItem[] = [
     { href: "/overview", label: "Overview", icon: LayoutDashboard },
+    { href: "/appointments", label: "Appointments", icon: Calendar, badge: "appointments" },
+    { href: "/queries", label: "Queries", icon: MessageCircleQuestion, badge: "queries" },
+    { href: "/reminders", label: "Reminders", icon: BellRing, badge: "reminders" },
     { href: "/conversations", label: "Inbox", icon: MessageCircle },
-    { href: "/leads", label: "Contacts", icon: Users },
+    { href: "/leads", label: "Contacts", icon: Users, badge: "new" },
     { href: "/broadcast", label: "Broadcast", icon: Radio },
     { href: "/automation", label: "Automation", icon: Zap },
     { href: "/catalog", label: "Catalog", icon: Package },
@@ -57,7 +69,7 @@ const unifiedItems = [
     { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-const adminItems = [
+const adminItems: SidebarItem[] = [
     { href: "/admin/subscriptions", label: "System Subs", icon: Bell },
     { href: "/admin/support", label: "Support Tickets", icon: LifeBuoy },
     { href: "/inquiries", label: "Inquiries", icon: Bell },
@@ -70,7 +82,10 @@ function Sidebar({
     onMobileClose,
     role,
     businessType,
-    plan
+    plan,
+    pendingCount,
+    queriesCount,
+    remindersCount
 }: {
     collapsed: boolean;
     onToggle: () => void;
@@ -79,6 +94,9 @@ function Sidebar({
     role?: string;
     businessType?: string;
     plan?: string;
+    pendingCount?: number;
+    queriesCount?: number;
+    remindersCount?: number;
 }) {
     const pathname = usePathname();
     const isAdmin = role === "admin" || role === "support_admin";
@@ -95,7 +113,7 @@ function Sidebar({
         return true;
     });
 
-    const allItems = isAdmin 
+    const allItems: SidebarItem[] = isAdmin 
         ? [...sidebarItems, ...adminItems] 
         : sidebarItems;
 
@@ -166,11 +184,26 @@ function Sidebar({
                             >
                                 <item.icon className={`w-4.5 h-4.5 flex-shrink-0 ${active ? "text-[#25D366]" : "group-hover:text-white"} transition-colors`} />
                                 {!collapsed && <span>{item.label}</span>}
-                                {!collapsed && item.href === "/leads" && (
+                                {!collapsed && item.badge === "new" && (
                                     <span className="ml-auto text-[10px] bg-[#25D366] text-black px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">
                                         New
                                     </span>
                                 )}
+                                {!collapsed && item.badge === "appointments" && pendingCount && pendingCount > 0 ? (
+                                    <span className="ml-auto text-[10px] bg-[#25D366] text-black px-2 py-0.5 rounded-full font-black tracking-tighter shadow-[0_0_10px_rgba(37,211,102,0.3)]">
+                                        {pendingCount}
+                                    </span>
+                                ) : null}
+                                {!collapsed && item.badge === "queries" && queriesCount && queriesCount > 0 ? (
+                                    <span className="ml-auto text-[10px] bg-amber-400 text-black px-2 py-0.5 rounded-full font-black tracking-tighter shadow-[0_0_10px_rgba(251,191,36,0.3)]">
+                                        {queriesCount}
+                                    </span>
+                                ) : null}
+                                {!collapsed && item.badge === "reminders" && remindersCount && remindersCount > 0 ? (
+                                    <span className="ml-auto text-[10px] bg-[#25D366] text-black px-2 py-0.5 rounded-full font-black tracking-tighter shadow-[0_0_10px_rgba(37,211,102,0.3)]">
+                                        {remindersCount}
+                                    </span>
+                                ) : null}
                             </Link>
                         );
                     })}
@@ -340,6 +373,42 @@ export default function DashboardLayoutClient({
 }) {
     const [collapsed, setCollapsed] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [pendingCount, setPendingCount] = useState<number>(0);
+    const [queriesCount, setQueriesCount] = useState<number>(0);
+    const [remindersCount, setRemindersCount] = useState<number>(0);
+
+    useEffect(() => {
+        const fetchCounts = async () => {
+            try {
+                // Appointments count
+                const apptsRes = await fetch("/api/appointments?filter=upcoming&limit=1");
+                if (apptsRes.ok) {
+                    const data = await apptsRes.json();
+                    setPendingCount(data.stats?.pendingCount || 0);
+                }
+
+                // Queries count
+                const queriesRes = await fetch("/api/queries/stats");
+                if (queriesRes.ok) {
+                    const data = await queriesRes.json();
+                    setQueriesCount(data.totalCount || 0);
+                }
+
+                // Reminders count (Due Today)
+                const remindersRes = await fetch("/api/reminders?filter=today&limit=1");
+                if (remindersRes.ok) {
+                    const data = await remindersRes.json();
+                    setRemindersCount(data.stats?.dueToday || 0);
+                }
+            } catch (err) {
+                console.error("Failed to fetch sidebar counts", err);
+            }
+        };
+        fetchCounts();
+        // Refresh every 2 minutes
+        const interval = setInterval(fetchCounts, 120000);
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <div className="min-h-screen bg-[#060a0f] flex font-[Outfit]">
@@ -369,6 +438,9 @@ export default function DashboardLayoutClient({
                 role={user?.role}
                 businessType={business?.businessType}
                 plan={business?.plan}
+                pendingCount={pendingCount}
+                queriesCount={queriesCount}
+                remindersCount={remindersCount}
             />
 
             {/* Main content — offset by sidebar on desktop only */}

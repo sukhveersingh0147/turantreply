@@ -4,7 +4,7 @@ import authConfig from "./auth.config";
 const { auth } = NextAuth(authConfig);
 
 // Keep these paths unprotected
-const publicRoutes = ["/", "/features", "/pricing", "/about", "/contact", "/login", "/signup", "/api/webhook"];
+const publicRoutes = ["/", "/features", "/pricing", "/about", "/contact", "/login", "/signup", "/api/webhook", "/salon", "/gym", "/coaching", "/realestate", "/restaurant"];
 const authRoutes = ["/login", "/signup"];
 
 /**
@@ -57,6 +57,13 @@ export default auth((req) => {
             if (role === "admin" || role === "support_admin") {
                 return Response.redirect(new URL("/admin/dashboard", nextUrl));
             }
+            
+            // Check onboarding first
+            const onboardingCompleted = (req.auth?.user as any)?.onboardingCompleted;
+            if (!onboardingCompleted) {
+                return Response.redirect(new URL("/onboarding/business-type", nextUrl));
+            }
+
             return Response.redirect(new URL("/overview", nextUrl));
         }
         return undefined;
@@ -64,6 +71,23 @@ export default auth((req) => {
 
     if (!isLoggedIn && !isPublicRoute) {
         return Response.redirect(new URL("/login", nextUrl));
+    }
+
+    // 3. Onboarding & Setup Redirection
+    const onboardingCompleted = (req.auth?.user as any)?.onboardingCompleted;
+    const isSetupComplete = (req.auth?.user as any)?.isSetupComplete;
+    
+    const isOnboardingRoute = nextUrl.pathname.startsWith("/onboarding");
+    const isSetupRoute = nextUrl.pathname.startsWith("/setup");
+    
+    // Onboarding has highest priority
+    if (isLoggedIn && !onboardingCompleted && !isOnboardingRoute && !isPublicRoute && !isApiRoute) {
+        return Response.redirect(new URL("/onboarding/business-type", nextUrl));
+    }
+
+    // Then Setup
+    if (isLoggedIn && onboardingCompleted && !isSetupComplete && !isSetupRoute && !isPublicRoute && !isApiRoute) {
+        return Response.redirect(new URL("/setup", nextUrl));
     }
 
 

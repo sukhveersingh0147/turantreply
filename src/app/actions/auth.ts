@@ -13,6 +13,7 @@ export async function register(prevState: any, formData: FormData) {
     const password = formData.get("password") as string;
     const company = formData.get("companyName") as string;
     const phone = formData.get("phone") as string;
+    const vertical = formData.get("vertical") as string;
 
     const refCode = formData.get("ref") as string;
 
@@ -60,8 +61,21 @@ export async function register(prevState: any, formData: FormData) {
                     whatsappNumber: phone || null,
                     plan: "FREE",
                     subscriptionStatus: "ACTIVE",
+                    businessType: vertical?.toUpperCase() || "OTHER",
+                    industry: vertical || "OTHER",
+                    dashboardSeeded: !!vertical,
                 }
             });
+
+            if (vertical) {
+                await tx.user.update({
+                    where: { id: user.id },
+                    data: { 
+                        onboardingCompleted: true,
+                        businessType: vertical,
+                    }
+                });
+            }
 
             if (referredById) {
                 await tx.affiliate.update({

@@ -88,7 +88,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                             email: "rs163592@gmail.com",
                             role: "admin",
                             status: "ACTIVE",
-                            isSetupComplete: true
+                            isSetupComplete: dbUser?.isSetupComplete || false
                         };
                     }
 

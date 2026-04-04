@@ -20,12 +20,18 @@ export default {
             if (user) {
                 token.role = (user as any).email === "rs163592@gmail.com" ? "admin" : (user as any).role;
                 token.id = user.id;
-                token.isSetupComplete = (user as any).email === "rs163592@gmail.com" ? true : (user as any).isSetupComplete;
+                token.isSetupComplete = (user as any).isSetupComplete;
+                token.onboardingCompleted = (user as any).onboardingCompleted;
             }
             
             // Handle manual updates from client (e.g., after setup completion)
-            if (trigger === "update" && session?.isSetupComplete !== undefined) {
-                token.isSetupComplete = session.isSetupComplete;
+            if (trigger === "update") {
+                if (session?.isSetupComplete !== undefined) {
+                    token.isSetupComplete = session.isSetupComplete;
+                }
+                if (session?.onboardingCompleted !== undefined) {
+                    token.onboardingCompleted = session.onboardingCompleted;
+                }
             }
 
             return token;
@@ -35,6 +41,7 @@ export default {
                 (session.user as any).role = token.role;
                 session.user.id = token.id as string;
                 (session.user as any).isSetupComplete = token.isSetupComplete;
+                (session.user as any).onboardingCompleted = token.onboardingCompleted;
             }
             return session;
         }
