@@ -46,6 +46,16 @@ jobs:
           cd backend
           npm run build
 
+      - name: Prepare Frontend Deployment
+        run: |
+          mkdir -p dist_frontend
+          cp -r .next dist_frontend/
+          cp -r public dist_frontend/
+          cp package.json dist_frontend/
+          cp next.config.ts dist_frontend/
+          cp server.js dist_frontend/
+          cp -r prisma dist_frontend/ || true
+
       - name: Deploy Frontend to cPanel
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -54,14 +64,15 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftp
           port: 21
-          local-dir: ./
+          local-dir: ./dist_frontend/
           server-dir: ./frontend/
-          exclude: |
-            **/node_modules/**
-            src/**
-            backend/**
-            .git*
-            .github/**
+
+      - name: Prepare Backend Deployment
+        run: |
+          mkdir -p dist_backend
+          cp -r backend/dist dist_backend/
+          cp backend/package.json dist_backend/
+          cp -r backend/prisma dist_backend/ || true
 
       - name: Deploy Backend to cPanel
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -71,9 +82,5 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftp
           port: 21
-          local-dir: ./backend/
+          local-dir: ./dist_backend/
           server-dir: ./backend/
-          exclude: |
-            **/node_modules/**
-            src/**
-            .git*
