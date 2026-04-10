@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Zap, Bot, CreditCard, Bell, Shield, Phone, Loader2, Sparkles, ShieldCheck, Users, UserPlus, Trash2 } from "lucide-react";
+import { Zap, Bot, CreditCard, Bell, Shield, Phone, Loader2, Sparkles, ShieldCheck, Users, UserPlus, Trash2, Rocket } from "lucide-react";
 import {
     updateBusinessSettings,
     updateWhatsAppSettings,
