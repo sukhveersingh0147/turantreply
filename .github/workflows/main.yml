@@ -47,33 +47,35 @@ jobs:
           npm run build
 
       - name: Deploy Frontend to cPanel (SFTP)
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
+          server: ${{ secrets.FTP_SERVER }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: sftp
           port: 22
-          local-dir: ./
-          server-dir: /home/ehaeyzhq/frontend/
+          local_path: './'
+          remote_path: '/home/ehaeyzhq/frontend'
+          sftp_only: true
+          delete_remote_files: false
           exclude: |
-            **/node_modules/**
-            src/**
-            backend/**
-            .git*
-            .github/**
+            node_modules
+            src
+            backend
+            .git
+            .github
 
       - name: Deploy Backend to cPanel (SFTP)
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
+          server: ${{ secrets.FTP_SERVER }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: sftp
           port: 22
-          local-dir: ./backend/
-          server-dir: /home/ehaeyzhq/backend/
+          local_path: './backend/'
+          remote_path: '/home/ehaeyzhq/backend'
+          sftp_only: true
+          delete_remote_files: false
           exclude: |
-            **/node_modules/**
-            src/**
-            .git*
+            node_modules
+            src
+            .git
