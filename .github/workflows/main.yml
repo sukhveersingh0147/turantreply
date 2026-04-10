@@ -65,7 +65,7 @@ jobs:
           protocol: ftp
           port: 21
           local-dir: ./dist_frontend/
-          server-dir: ./frontend/
+          server-dir: ./turantreply.com/
 
       - name: Prepare Backend Deployment
         run: |
@@ -83,4 +83,4 @@ jobs:
           protocol: ftp
           port: 21
           local-dir: ./dist_backend/
-          server-dir: ./backend/
+          server-dir: ./api.turantreply.com/
