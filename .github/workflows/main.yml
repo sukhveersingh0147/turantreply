@@ -55,7 +55,7 @@ jobs:
           protocol: ftp
           port: 21
           local-dir: ./
-          server-dir: /frontend/
+          server-dir: ./
           exclude: |
             **/node_modules/**
             src/**
@@ -72,7 +72,7 @@ jobs:
           protocol: ftp
           port: 21
           local-dir: ./backend/
-          server-dir: /backend/
+          server-dir: ./backend/
           exclude: |
             **/node_modules/**
             src/**
