@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { apiFetch } from "@/lib/api";
 import { X, Calendar as CalendarIcon, Clock, Phone, User, Tag, FileText } from "lucide-react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
@@ -44,7 +45,7 @@ export default function NewAppointmentModal({
       const [hours, minutes] = time.split(":").map(Number);
       const startTime = setMinutes(setHours(new Date(date), hours), minutes);
       
-      const res = await fetch("/api/appointments", {
+      const res = await apiFetch("/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

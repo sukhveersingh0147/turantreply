@@ -20,6 +20,7 @@ import { RuleCard } from "@/components/reminders/RuleCard";
 import { SendReminderModal } from "@/components/reminders/SendReminderModal";
 import { CreateReminderModal } from "@/components/reminders/CreateReminderModal";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 
 export default function RemindersPage() {
     const [activeTab, setActiveTab] = useState<"queue" | "history" | "rules">("queue");
@@ -48,8 +49,8 @@ export default function RemindersPage() {
         else setLoading(true);
 
         try {
-            const apiPath = activeTab === "rules" ? "/api/reminders/rules" : `/api/reminders?tab=${activeTab}&filter=${filter}&page=${page}`;
-            const res = await fetch(apiPath);
+            const apiPath = activeTab === "rules" ? "/reminders/rules" : `/reminders?tab=${activeTab}&filter=${filter}&page=${page}`;
+            const res = await apiFetch(apiPath);
             if (!res.ok) throw new Error("Failed to fetch");
 
             const json = await res.json();
@@ -76,7 +77,7 @@ export default function RemindersPage() {
 
     const handleAction = async (id: string, action: "SENT" | "SKIP") => {
         try {
-            const res = await fetch("/api/reminders", {
+            const res = await apiFetch("/reminders", {
                 method: "PATCH",
                 body: JSON.stringify({ id, action })
             });
@@ -95,7 +96,7 @@ export default function RemindersPage() {
 
     const handleRuleToggle = async (id: string, isActive: boolean) => {
         try {
-            const res = await fetch(`/api/reminders/rules/${id}`, {
+            const res = await apiFetch(`/reminders/rules/${id}`, {
                 method: "PATCH",
                 body: JSON.stringify({ isActive })
             });
@@ -111,7 +112,7 @@ export default function RemindersPage() {
     const handleRuleDelete = async (id: string) => {
         if (!confirm("Delete this rule?")) return;
         try {
-            const res = await fetch(`/api/reminders/rules/${id}`, { method: "DELETE" });
+            const res = await apiFetch(`/reminders/rules/${id}`, { method: "DELETE" });
             if (res.ok) {
                 setData(prev => prev.filter(r => r.id !== id));
                 toast.success("Rule deleted");
@@ -123,7 +124,7 @@ export default function RemindersPage() {
 
     const handleRuleCreate = async (ruleData: any) => {
         try {
-            const res = await fetch("/api/reminders/rules", {
+            const res = await apiFetch("/reminders/rules", {
                 method: "POST",
                 body: JSON.stringify(ruleData)
             });

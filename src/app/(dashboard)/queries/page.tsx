@@ -14,12 +14,32 @@ export default async function QueriesPage() {
 
     if (!business) redirect("/setup");
 
-    // Fetch inquiries (could be expanded to include whatsapp leads with pending queries)
-    const inquiries = await prisma.inquiry.findMany({
-        orderBy: {
-            createdAt: 'desc',
-        },
+    // Fetch leads where AI is paused (Human help requested)
+    const leadsCount = await prisma.lead.count({
+        where: { businessId: business.id, isAiPaused: true }
     });
+
+    const leads = await prisma.lead.findMany({
+        where: { 
+            businessId: business.id,
+            isAiPaused: true
+        },
+        orderBy: {
+            updatedAt: 'desc',
+        },
+        take: 50
+    });
+
+    // Map leads to inquiry format for the UI
+    const inquiries = leads.map(l => ({
+        id: l.id,
+        name: l.name || "Customer",
+        email: l.phone,
+        subject: "Action Required: AI Paused",
+        message: l.lastQuery || "Human assistance requested.",
+        createdAt: l.updatedAt,
+        type: "WHATSAPP_LEAD"
+    }));
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">

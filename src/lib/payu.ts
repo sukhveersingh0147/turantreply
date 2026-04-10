@@ -1,8 +1,8 @@
 import crypto from "crypto";
 
 export const PLANS = {
-  starter: {
-    id:           "starter",
+  STARTER: {
+    id:           "STARTER",
     name:         "Starter",
     price:        999,
     priceDisplay: "₹999/month",
@@ -16,18 +16,13 @@ export const PLANS = {
       "Basic analytics",
       "Lead recovery",
       "Query dashboard",
-    ],
-    notIncluded: [
-      "Broadcast messaging",
-      "Advanced analytics",
-      "Follow-up sequences",
     ]
   },
-  growth: {
-    id:           "growth",
+  GROWTH: {
+    id:           "GROWTH",
     name:         "Growth",
-    price:        2999,
-    priceDisplay: "₹2,999/month",
+    price:        2499,
+    priceDisplay: "₹2,499/month",
     conversations: 5000,
     description:  "Most Popular",
     features: [
@@ -38,19 +33,14 @@ export const PLANS = {
       "Advanced analytics",
       "Follow-up sequences",
       "Priority support",
-      "All 6 vertical templates",
-    ],
-    notIncluded: [
-      "Multi-business dashboard",
-      "White-label",
     ]
   },
-  agency: {
-    id:           "agency",
-    name:         "Agency",
-    price:        9999,
-    priceDisplay: "₹9,999/month",
-    conversations: -1,  // unlimited
+  PRO: {
+    id:           "PRO",
+    name:         "Pro",
+    price:        4999,
+    priceDisplay: "₹4,999/month",
+    conversations: -1, // unlimited
     description:  "For agencies & large businesses",
     features: [
       "Unlimited conversations",
@@ -59,10 +49,7 @@ export const PLANS = {
       "White-label option",
       "Custom integrations",
       "Dedicated account manager",
-      "API access",
-      "Priority WhatsApp support",
-    ],
-    notIncluded: []
+    ]
   }
 } as const;
 
@@ -79,6 +66,8 @@ export function generatePayUHash(params: {
   udf2?: string;
   udf3?: string;
   salt: string;
+  si?: string;
+  si_details?: string;
 }): string {
   const hashString = [
     params.key,
@@ -87,16 +76,16 @@ export function generatePayUHash(params: {
     params.productinfo,
     params.firstname,
     params.email,
-    params.udf1 || "",  // udf1
-    params.udf2 || "",  // udf2
-    params.udf3 || "",  // udf3
-    "",  // udf4
-    "",  // udf5
-    "",  // udf6
-    "",  // udf7
-    "",  // udf8
-    "",  // udf9
-    "",  // udf10
+    params.udf1 || "",
+    params.udf2 || "",
+    params.udf3 || "",
+    "", // udf4
+    "", // udf5
+    "", // udf6
+    "", // udf7
+    "", // udf8
+    "", // udf9
+    "", // udf10
     params.salt,
   ].join("|");
 
@@ -123,16 +112,16 @@ export function verifyPayUHash(params: {
   const hashString = [
     params.salt,
     params.status,
-    "",  // udf10
-    "",  // udf9
-    "",  // udf8
-    "",  // udf7
-    "",  // udf6
-    "",  // udf5
-    "",  // udf4
-    params.udf3 || "",  // udf3
-    params.udf2 || "",  // udf2
-    params.udf1 || "",  // udf1
+    "", // udf10
+    "", // udf9
+    "", // udf8
+    "", // udf7
+    "", // udf6
+    "", // udf5
+    "", // udf4
+    params.udf3 || "",
+    params.udf2 || "",
+    params.udf1 || "",
     params.email,
     params.firstname,
     params.productinfo,
@@ -149,6 +138,17 @@ export function verifyPayUHash(params: {
   return computedHash === params.receivedHash;
 }
 
+export const PAYU_CONFIG = {
+  key:         process.env.PAYU_MERCHANT_KEY!,
+  salt:        process.env.PAYU_MERCHANT_SALT!,
+  baseUrl:     process.env.NODE_ENV === "production"
+               ? "https://secure.payu.in/_payment"
+               : "https://test.payu.in/_payment",
+  successUrl:  `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/payu/verify`,
+  failureUrl:  `${process.env.NEXT_PUBLIC_APP_URL}/pricing?payment=failed`,
+  webhookUrl:  `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/payu/webhook`,
+};
+
 export function generateTxnId(userId: string): string {
   const timestamp = Date.now();
   const random = Math.random()
@@ -159,44 +159,27 @@ export function generateTxnId(userId: string): string {
   return `TR-${userId.substring(0, 6)}-${timestamp}-${random}`;
 }
 
-export const PAYU_CONFIG = {
-  key:         process.env.PAYU_MERCHANT_KEY!,
-  salt:        process.env.PAYU_MERCHANT_SALT!,
-  baseUrl:     process.env.NODE_ENV === "production"
-               ? "https://secure.payu.in"
-               : "https://test.payu.in",
-  successUrl:  `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/payu/verify`,
-  failureUrl:  `${process.env.NEXT_PUBLIC_APP_URL}/pricing?payment=failed`,
-  webhookUrl:  `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/payu/webhook`,
-};
+export function generateSIDetails(amount: number, planName: string) {
+  const billingCycle = "monthly";
+  const billingInterval = 1;
+  
+  // Format dates as DD-MM-YYYY as per PayU SI requirement
+  const startDate = new Date();
+  startDate.setMonth(startDate.getMonth() + 1);
+  const startDateStr = `${String(startDate.getDate()).padStart(2, '0')}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${startDate.getFullYear()}`;
 
-export function getSIParams(planId: PlanId) {
-  const plan = PLANS[planId];
-  return {
-    si:                  "1",
-    si_merchant_id:      process.env.PAYU_MERCHANT_KEY!,
-    si_amount:           plan.price.toString(),
-    si_currency:         "INR",
-    si_desc:             `TurantReply ${plan.name} Plan`,
-    si_start_date:       getNextMonthDate(),
-    si_end_date:         getFutureDate(24), // 2 years
-    si_interval_units:   "month",
-    si_interval:         "1",
-    si_resume_date:      getNextMonthDate(),
-    si_resume_amount:    plan.price.toString(),
+  const endDate = new Date();
+  endDate.setFullYear(endDate.getFullYear() + 5); // 5 years validity
+  const endDateStr = `${String(endDate.getDate()).padStart(2, '0')}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${endDate.getFullYear()}`;
+
+  const siDetails = {
+    billingAmount: amount.toString(),
+    billingCurrency: "INR",
+    billingCycle,
+    billingInterval: billingInterval.toString(),
+    paymentStartDate: startDateStr,
+    paymentEndDate: endDateStr,
   };
-}
 
-function getNextMonthDate(): string {
-  const d = new Date();
-  d.setMonth(d.getMonth() + 1);
-  return d.toISOString().split("T")[0]
-    .split("-").reverse().join("-");
-}
-
-function getFutureDate(months: number): string {
-  const d = new Date();
-  d.setMonth(d.getMonth() + months);
-  return d.toISOString().split("T")[0]
-    .split("-").reverse().join("-");
+  return JSON.stringify(siDetails);
 }

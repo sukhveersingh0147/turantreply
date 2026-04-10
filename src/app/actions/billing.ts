@@ -7,10 +7,26 @@ import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 import { SUBSCRIPTION_PLANS, SubscriptionPlan } from "@/config/subscription";
 
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID!,
-    key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
+// Lazy initialize Razorpay to avoid build-time errors when keys are missing
+let razorpayInstance: Razorpay | null = null;
+const getRazorpay = () => {
+    if (razorpayInstance) return razorpayInstance;
+    
+    const key_id = process.env.RAZORPAY_KEY_ID;
+    const key_secret = process.env.RAZORPAY_KEY_SECRET;
+    
+    if (!key_id || !key_id.startsWith('rzp_')) {
+        console.warn("Razorpay keys missing or invalid. Payments will not work.");
+        // Return a dummy object for build-time safety if needed, 
+        // but the code should ideally handle this at runtime.
+    }
+
+    razorpayInstance = new Razorpay({
+        key_id: key_id || 'rzp_test_placeholder',
+        key_secret: key_secret || 'placeholder_secret',
+    });
+    return razorpayInstance;
+};
 
 export async function createCheckoutOrder(planKey: SubscriptionPlan) {
     const session = await auth();
@@ -42,7 +58,7 @@ export async function createCheckoutOrder(planKey: SubscriptionPlan) {
     }
 
     try {
-        const order = await razorpay.orders.create(options);
+        const order = await getRazorpay().orders.create(options);
         return {
             id: order.id,
             amount: order.amount,

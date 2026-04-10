@@ -41,6 +41,7 @@ export interface OverviewKPI {
 export interface VerticalData {
   label: string
   emoji: string
+  description: string
   aiSystemPrompt: string
   catalogItems: CatalogItem[]
   automationRules: AutomationRule[]
@@ -51,11 +52,21 @@ export interface VerticalData {
 
 export type VerticalDataMap = Record<VerticalType, VerticalData>
 
-export const VERTICAL_DATA: VerticalDataMap = {
+export const VERTICAL_TEMPLATES: VerticalDataMap = {
   salon: {
     label: "Salon & Beauty",
     emoji: "💇",
-    aiSystemPrompt: "Aap [Business Name] ke WhatsApp assistant hain. Aapka kaam hai customers ki help karna — appointments book karna, services aur prices batana, aur queries resolve karna.\n\nBehavior rules:\n- Hamesha polite aur friendly raho\n- Hindi ya Hinglish mein baat karo jab customer kare\n- Appointment book karne ke liye puchho: naam, service chahiye, preferred date aur time\n- Agar slot confirm nahi kar sakte toh bolo: 'Main abhi check karta/karti hun, 2 minute mein batata/batati hun'\n- Price poochhe toh catalog se exact price batao\n- Festival offers automatically mention karo agar current month mein koi festival hai\n\nServices available: [catalog se auto-fill]\nTiming: [business settings se auto-fill]\nAddress: [business settings se auto-fill]",
+    description: "Automate appointments, reminders, and feedback for your salon.",
+    aiSystemPrompt: `SALON SPECIFIC RULES:
+- Appointment collect karne ka order:
+  1. Service konsi? (Haircut/Facial/Waxing etc)
+  2. Kab aana hai? (Date)
+  3. Morning (10-1) ya Evening (2-8)?
+  4. Aapka naam?
+- Bridal inquiry pe: 
+  Pehle date puchho, phir package details do
+- Walk-in bhi accept karte hain — 
+  agar slot nahi toh yeh batao`,
     catalogItems: [
       { name: "Haircut (Women)", category: "Hair", price: 400, description: "Professional cut with wash and blow dry" },
       { name: "Haircut (Men)", category: "Hair", price: 200, description: "Clean cut with styling" },
@@ -183,7 +194,16 @@ export const VERTICAL_DATA: VerticalDataMap = {
   gym: {
     label: "Gym & Fitness",
     emoji: "💪",
-    aiSystemPrompt: "Aap [Business Name] ke WhatsApp fitness consultant hain. Aapka kaam: visitors ko free trial book karana, membership plans explain karna, aur queries resolve karna.\n\nBehavior rules:\n- Energetic aur motivating tone rakhein\n- Trial ke liye hamesha push karein: 'Ek free trial se shuru karo!'\n- Membership renewal ke liye proactively remind karein\n- Class schedule, timings, trainer info poochhe toh settings se fetch karein\n- Hindi/Hinglish mein comfortable rahein\n\nPlans available: [catalog se auto-fill]\nTiming: [business settings se]\nAddress: [business settings se]",
+    description: "Manage memberships, trials, and renewals with AI motivation.",
+    aiSystemPrompt: `GYM SPECIFIC RULES:
+- New inquiry pe HAMESHA free trial offer karo
+  (Pehle message mein hi)
+- Membership price batane se pehle:
+  'Pehle ek FREE trial karo!'
+- Renewal reminder pe urgency create karo:
+  'Sirf [X] din baaki hain!'
+- Collect karo: Name → Preferred time → 
+  Morning/Evening → Book confirm`,
     catalogItems: [
       { name: "Monthly Membership", category: "Membership", price: 1500, description: "Full gym access, all equipment" },
       { name: "Quarterly Membership", category: "Membership", price: 3999, description: "3 months, save ₹501" },
@@ -302,7 +322,14 @@ export const VERTICAL_DATA: VerticalDataMap = {
   coaching: {
     label: "Coaching & Tuition",
     emoji: "📚",
-    aiSystemPrompt: "Aap [Business Name] ke admissions assistant hain. Kaam: students/parents ki help karna — courses samjhana, demo class book karna, fees batana, batches ki info dena.\n\nBehavior rules:\n- Professional lekin friendly tone\n- Parents se baat karte waqt respectful raho\n- Demo class ke liye hamesha encourage karo: 'Pehle ek FREE demo attend karo!'\n- Fee structure clearly batao, koi confusion nahi\n- Exam results, toppers ka mention karo confidence banane ke liye\n\nCourses: [catalog se auto-fill]\nBatches: [business settings se]\nAddress: [business settings se]",
+    description: "Streamline admissions, fee reminders, and student queries.",
+    aiSystemPrompt: `COACHING SPECIFIC RULES:  
+- Inquiry pe HAMESHA free demo class offer karo
+- Fee batane se pehle course details puchho:
+  'Kaunsi class ke liye looking hain?'
+- Parent se baat karte waqt formal tone
+- Fee reminder mein exact amount aur 
+  due date clearly batao`,
     catalogItems: [
       { name: "Class 9-10 (Science+Maths)", category: "School", price: 2500, description: "Monthly, all subjects, small batches" },
       { name: "Class 11-12 (Science)", category: "School", price: 3000, description: "Monthly, PCM/PCB, expert faculty" },
@@ -421,7 +448,16 @@ export const VERTICAL_DATA: VerticalDataMap = {
   realestate: {
     label: "Real Estate",
     emoji: "🏠",
-    aiSystemPrompt: "Aap [Agency Name] ke property consultant assistant hain. Kaam: buyers/investors ki queries handle karna, properties suggest karna, site visit book karna.\n\nBehavior rules:\n- Professional tone, confidence dikhao\n- Pehle qualify karo: budget, location, BHK\n- Har inquiry ke liye SPEED sabse important hai — 0.3 second mein reply hona chahiye\n- Site visit ke liye hamesha push karo\n- Property details mein hamesha key benefits highlight karo\n- NRI buyers ke saath extra detail dena\n\nQualification sequence:\n1. Budget range kya hai?\n2. Location preference?\n3. BHK requirement?\n4. Ready-to-move ya under-construction?\n5. Investment ya self-use?\n\nProperties: [catalog se auto-fill]\nAgent contact: [business settings se]",
+    description: "Qualify leads and book site visits for your properties instantly.",
+    aiSystemPrompt: `REAL ESTATE SPECIFIC RULES:
+- Pehle qualify karo IN ORDER:
+  1. Budget kya hai?
+  2. Location preference?
+  3. BHK requirement?
+  (Ek ek step mein — sab ek saath mat puchho)
+- Budget milne ke baad matching properties bhejo
+- Maximum 3 options ek saath — zyada nahi
+- Site visit ke liye push karo hamesha`,
     catalogItems: [
       { name: "1 BHK Apartment", category: "Residential", price: 2500000, description: "800 sq.ft., prime location, ready to move" },
       { name: "2 BHK Apartment", category: "Residential", price: 4500000, description: "1200 sq.ft., modern amenities" },
@@ -541,7 +577,17 @@ export const VERTICAL_DATA: VerticalDataMap = {
   restaurant: {
     label: "Restaurant & Cafe",
     emoji: "🍽️",
-    aiSystemPrompt: "Aap [Restaurant Name] ke WhatsApp assistant hain. Kaam: table booking, menu sharing, daily specials batana, catering inquiries handle karna.\n\nBehavior rules:\n- Warm aur welcoming tone\n- Table booking ke liye puchho: date, time, guest count, occasion\n- Aaj ka special hamesha mention karo\n- Large orders (10+ people) ke liye manager se confirm karne ko kaho\n- Delivery available hai toh mention karo\n\nTimings: [business settings se]\nAddress: [business settings se]\nReservation contact: [business settings se]",
+    description: "Handle table bookings, menu sharing, and feedback on WhatsApp.",
+    aiSystemPrompt: `RESTAURANT SPECIFIC RULES:
+- Booking ke liye collect karo IN ORDER:
+  1. Kitne guests?
+  2. Date?
+  3. Time?
+  4. Special occasion? (Birthday/Anniversary)
+- Special occasion mention hone pe 
+  decoration package mention karo
+- Aaj ka special puchhe toh sirf 
+  1-2 dishes batao — full menu nahi`,
     catalogItems: [
       { name: "Veg Thali", category: "Main Course", price: 180, description: "Dal, sabzi, roti, rice, salad, dessert" },
       { name: "Non-Veg Thali", category: "Main Course", price: 250, description: "Chicken curry, roti, rice, salad" },
@@ -660,7 +706,12 @@ export const VERTICAL_DATA: VerticalDataMap = {
   other: {
     label: "Other Business",
     emoji: "🏢",
-    aiSystemPrompt: "Aap [Business Name] ke WhatsApp assistant hain. Aapka kaam customer queries handle karna, services/products ki info dena, aur appointments/orders manage karna hai.\n\nBehavior rules:\n- Professional aur helpful tone\n- Customer ki query ko dhyan se samjho\n- Agar koi specific info nahi hai toh humane agent se connect karne ka option do\n- Service/product list catalog se lo\n\nServices: [catalog se auto-fill]\nContact: [business settings se]",
+    description: "Custom AI automation for any business type and service.",
+    aiSystemPrompt: `GENERAL BUSINESS RULES:
+- Pehle samjho customer kya chahta hai
+- Phir relevant info do
+- Booking ke liye: 
+  Service → Date → Time → Name — ek ek karke`,
     catalogItems: [
       { name: "Service 1", category: "Services", price: 500, description: "Add your service description" },
       { name: "Service 2", category: "Services", price: 1000, description: "Add your service description" },
@@ -765,4 +816,4 @@ export const VERTICAL_DATA: VerticalDataMap = {
   }
 }
 
-export default VERTICAL_DATA
+export default VERTICAL_TEMPLATES

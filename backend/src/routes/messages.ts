@@ -1,15 +1,19 @@
-import { Router, Request, Response } from "express";
+import { Router, Response } from "express";
 import { prisma } from "../config/prisma";
+import { AuthRequest, authMiddleware } from "../middleware/auth";
 
 export const messagesRouter = Router();
 
-// Get recent messages for a specific lead
-messagesRouter.get("/:leadId", async (req: Request, res: Response) => {
-    const { leadId } = req.params;
-
+// Get recent messages for a specific lead (Secured)
+messagesRouter.get("/:leadId", authMiddleware, async (req: AuthRequest, res: Response) => {
     try {
+        const businessId = req.businessId;
+        const { leadId } = req.params;
+
+        if (!businessId) return res.status(401).json({ error: "Unauthorized" });
+
         const messages = await prisma.message.findMany({
-            where: { leadId: leadId as string },
+            where: { leadId: leadId as string, businessId },
             orderBy: { timestamp: "asc" },
             take: 100,
         });

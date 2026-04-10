@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { apiFetch } from "@/lib/api";
 
 export default function BillingClient() {
   const [loading, setLoading] = useState(true);
@@ -29,8 +30,8 @@ export default function BillingClient() {
   const fetchBillingData = async () => {
     try {
       const [statusRes, historyRes] = await Promise.all([
-        fetch("/api/payments/payu/subscription-status"),
-        fetch("/api/payments/history")
+        apiFetch("/payments/payu/subscription-status"),
+        apiFetch("/payments/history")
       ]);
       
       const statusData = await statusRes.json();
@@ -50,7 +51,7 @@ export default function BillingClient() {
     
     setCancelling(true);
     try {
-      const res = await fetch("/api/payments/payu/cancel-autopay", {
+      const res = await apiFetch("/payments/payu/cancel-autopay", {
         method: "POST"
       });
       if (res.ok) {

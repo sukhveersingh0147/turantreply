@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 
 const VALID_VERTICALS = ["salon", "gym", "coaching", "realestate", "restaurant", "other"];
 
-export default function VerticalLandingPage({ params }: { params: { vertical: string } }) {
-    const { vertical } = params;
+export default async function VerticalLandingPage({ params }: { params: Promise<{ vertical: string }> }) {
+    const { vertical } = await params;
 
     if (!VALID_VERTICALS.includes(vertical.toLowerCase())) {
         notFound();

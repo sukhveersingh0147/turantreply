@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { apiFetch } from "@/lib/api";
 import { X, Calendar as CalendarIcon, Clock, Trash2, Tag, FileText, CheckCircle2, AlertCircle } from "lucide-react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
@@ -57,7 +58,7 @@ export default function EditAppointmentModal({
       const [hours, minutes] = time.split(":").map(Number);
       const startTime = setMinutes(setHours(new Date(date), hours), minutes);
       
-      const res = await fetch(`/api/appointments/${appointment.id}`, {
+      const res = await apiFetch(`/appointments/${appointment.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -85,7 +86,7 @@ export default function EditAppointmentModal({
     
     setLoading(true);
     try {
-      const res = await fetch(`/api/appointments/${appointment.id}`, {
+      const res = await apiFetch(`/appointments/${appointment.id}`, {
         method: "DELETE",
       });
       if (res.ok) {

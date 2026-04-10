@@ -54,14 +54,28 @@ export async function updateWhatsAppSettings(data: { whatsappNumber: string; waT
     const business = await getAccessibleBusiness();
     if (!business) throw new Error("Unauthorized or Business not found");
 
-    await prisma.business.update({
-        where: { id: business.id },
-        data: {
-            whatsappNumber: data.whatsappNumber,
-            waToken: data.waToken,
-            waPhoneNumberId: data.waPhoneNumberId,
-        },
-    });
+    // De-duplicate: Ensure no OTHER business is using this Phone ID
+    await prisma.$transaction([
+        prisma.business.updateMany({
+            where: { 
+                waPhoneNumberId: data.waPhoneNumberId,
+                id: { not: business.id }
+            },
+            data: {
+                waPhoneNumberId: null,
+                waToken: null,
+                whatsappNumber: null,
+            }
+        }),
+        prisma.business.update({
+            where: { id: business.id },
+            data: {
+                whatsappNumber: data.whatsappNumber,
+                waToken: data.waToken,
+                waPhoneNumberId: data.waPhoneNumberId,
+            },
+        })
+    ]);
 
     revalidatePath("/settings");
     return { success: true };
@@ -130,7 +144,7 @@ export async function generateAISettings(businessDescription: string) {
 
     try {
         const response = await openai.chat.completions.create({
-            model: process.env.AI_MODEL || "gpt-4o-mini",
+            model: process.env.AI_MODEL || "moonshotai/kimi-k2-instruct",
             messages: [
                 {
                     role: "system",
@@ -304,7 +318,7 @@ export async function improveContentWithAI(fieldName: string, content: string, b
 
     try {
         const response = await openai.chat.completions.create({
-            model: process.env.AI_MODEL || "openai/gpt-4o-mini",
+            model: process.env.AI_MODEL || "moonshotai/kimi-k2-instruct",
             messages: [
                 {
                     role: "system",
@@ -336,7 +350,7 @@ export async function generateConversationPreview(data: {
 
     try {
         const response = await openai.chat.completions.create({
-            model: process.env.AI_MODEL || "openai/gpt-4o-mini",
+            model: process.env.AI_MODEL || "moonshotai/kimi-k2-instruct",
             messages: [
                 {
                     role: "system",

@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteInquiry } from "@/app/actions/marketing";
+import { toggleAiPause } from "@/app/actions/leads";
+import { PlayCircle } from "lucide-react";
 
 export default function InquiryList({ initialInquiries }: { initialInquiries: any[] }) {
     const [inquiries, setInquiries] = useState(initialInquiries);
@@ -25,13 +27,24 @@ export default function InquiryList({ initialInquiries }: { initialInquiries: an
         );
     };
 
-    const handleDelete = async (id: string) => {
+    const handleAction = async (inquiry: any) => {
+        if (inquiry.type === "WHATSAPP_LEAD") {
+            try {
+                await toggleAiPause(inquiry.id);
+                toast.success("AI Resumed for this customer");
+                setInquiries(prev => prev.filter(i => i.id !== inquiry.id));
+            } catch (error) {
+                toast.error("Failed to resume AI");
+            }
+            return;
+        }
+
         if (!confirm("Are you sure you want to delete this inquiry?")) return;
 
-        const result = await deleteInquiry(id);
+        const result = await deleteInquiry(inquiry.id);
         if (result.success) {
             toast.success("Inquiry deleted");
-            setInquiries(prev => prev.filter(i => i.id !== id));
+            setInquiries(prev => prev.filter(i => i.id !== inquiry.id));
         } else {
             toast.error(result.error || "Failed to delete");
         }
@@ -87,11 +100,20 @@ export default function InquiryList({ initialInquiries }: { initialInquiries: an
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    handleDelete(inquiry.id);
+                                    handleAction(inquiry);
                                 }}
-                                className="p-2 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                className={`p-2 rounded-lg transition-all ${
+                                    inquiry.type === "WHATSAPP_LEAD"
+                                    ? "text-[#25D366] hover:bg-[#25D366]/10"
+                                    : "text-white/30 hover:text-red-400 hover:bg-red-500/10"
+                                }`}
+                                title={inquiry.type === "WHATSAPP_LEAD" ? "Resume AI Agent" : "Delete Inquiry"}
                             >
-                                <Trash2 className="w-4.5 h-4.5" />
+                                {inquiry.type === "WHATSAPP_LEAD" ? (
+                                    <PlayCircle className="w-5 h-5" />
+                                ) : (
+                                    <Trash2 className="w-4.5 h-4.5" />
+                                )}
                             </button>
                             {expandedIds.includes(inquiry.id) ? (
                                 <ChevronUp className="w-5 h-5 text-white/20" />

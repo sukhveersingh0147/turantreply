@@ -17,6 +17,7 @@ import { QueryCard } from "@/components/queries/QueryCard";
 import { ReplyModal } from "@/components/queries/ReplyModal";
 import { ResumeAiConfirm } from "@/components/queries/ResumeAiConfirm";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 
 export default function QueriesPage() {
     const [queries, setQueries] = useState<any[]>([]);
@@ -55,7 +56,7 @@ export default function QueriesPage() {
                 limit: "20"
             });
 
-            const res = await fetch(`/api/queries?${params.toString()}`);
+            const res = await apiFetch(`/queries?${params.toString()}`);
             if (!res.ok) throw new Error("Failed to fetch queries");
 
             const data = await res.json();
@@ -81,7 +82,7 @@ export default function QueriesPage() {
 
     const handleResolve = async (leadId: string) => {
         try {
-            const res = await fetch(`/api/queries/${leadId}/resolve`, {
+            const res = await apiFetch(`/queries/${leadId}/resolve`, {
                 method: "PATCH",
             });
 
@@ -125,7 +126,7 @@ export default function QueriesPage() {
         setIsResuming(true);
         
         try {
-            const res = await fetch(`/api/queries/${resumeLeadId}/resume-ai`, {
+            const res = await apiFetch(`/queries/${resumeLeadId}/resume-ai`, {
                 method: "PATCH",
             });
 

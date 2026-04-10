@@ -45,7 +45,7 @@ export async function generateAIResponse(
     }
 
     try {
-        const model = process.env.AI_MODEL || "openai/gpt-4o-mini";
+        const model = process.env.AI_MODEL || "moonshotai/kimi-k2-instruct";
         console.log(`[AI] Generating response using model: ${model}`);
         const response = await openai.chat.completions.create({
             model: model,
@@ -234,7 +234,7 @@ export async function extractLeadData(
     if (!process.env.OPENAI_API_KEY) return {};
 
     try {
-        const model = process.env.AI_MODEL || "openai/gpt-4o-mini";
+        const model = process.env.AI_MODEL || "moonshotai/kimi-k2-instruct";
         console.log(`[AI] Extracting lead data using model: ${model}`);
         const response = await openai.chat.completions.create({
             model: model,

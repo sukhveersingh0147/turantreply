@@ -91,7 +91,7 @@ export default function OnboardingPage() {
       localStorage.setItem("onboardingCompleted", "true");
 
       toast.success("Dashboard configuration started!");
-      router.replace("/dashboard");
+      router.push(`/onboarding/business-details?type=${selectedType}`);
     } catch (error) {
       console.error(error);
       toast.error("Kuch toh gadbad ho gayi. Dobara try karein?");
@@ -109,10 +109,10 @@ export default function OnboardingPage() {
       });
       if (res.ok) {
         await update({ onboardingCompleted: true });
-        router.replace("/dashboard");
+        router.replace("/overview");
       }
     } catch (e) {
-      router.replace("/dashboard");
+      router.replace("/overview");
     }
   };
 

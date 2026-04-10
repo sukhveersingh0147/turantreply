@@ -55,10 +55,10 @@ const features = [
     },
     {
         icon: Bot,
-        title: "AI Conversations (GPT-4)",
-        desc: "When no automation rule matches, our GPT-4 powered AI assistant takes over. It has full context of your business, your products, and the conversation history — responding like a trained human sales rep.",
+        title: "AI Conversations (Kimi K2)",
+        desc: "When no automation rule matches, our Kimi K2 powered AI assistant takes over. It has full context of your business, your products, and the conversation history — responding like a trained human sales rep.",
         points: [
-            "Powered by OpenAI GPT-4",
+            "Powered by Kimi K2 (Groq)",
             "Business-aware context",
             "Handles complex queries",
             "All AI replies logged",

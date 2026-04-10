@@ -18,30 +18,32 @@ export default {
     callbacks: {
         async jwt({ token, user, trigger, session }) {
             if (user) {
-                token.role = (user as any).email === "rs163592@gmail.com" ? "admin" : (user as any).role;
-                token.id = user.id;
-                token.isSetupComplete = (user as any).isSetupComplete;
-                token.onboardingCompleted = (user as any).onboardingCompleted;
+                token.role = (user as any).email === "rs163592@gmail.com" ? "admin" : (user as any).role || "client";
+                token.id = user.id as string;
+                token.businessType = (user as any).businessType || null;
+                token.dashboardSeeded = (user as any).dashboardSeeded || false;
+                token.onboardingCompleted = (user as any).onboardingCompleted || false;
+                token.isSetupComplete = (user as any).isSetupComplete || false;
             }
             
             // Handle manual updates from client (e.g., after setup completion)
             if (trigger === "update") {
-                if (session?.isSetupComplete !== undefined) {
-                    token.isSetupComplete = session.isSetupComplete;
-                }
-                if (session?.onboardingCompleted !== undefined) {
-                    token.onboardingCompleted = session.onboardingCompleted;
-                }
+                if (session?.isSetupComplete !== undefined) token.isSetupComplete = session.isSetupComplete;
+                if (session?.onboardingCompleted !== undefined) token.onboardingCompleted = session.onboardingCompleted;
+                if (session?.businessType !== undefined) token.businessType = session.businessType;
+                if (session?.dashboardSeeded !== undefined) token.dashboardSeeded = session.dashboardSeeded;
             }
 
             return token;
         },
         session({ session, token }) {
             if (token && session.user) {
-                (session.user as any).role = token.role;
                 session.user.id = token.id as string;
-                (session.user as any).isSetupComplete = token.isSetupComplete;
-                (session.user as any).onboardingCompleted = token.onboardingCompleted;
+                session.user.role = token.role as string;
+                session.user.businessType = token.businessType as string | null;
+                session.user.dashboardSeeded = token.dashboardSeeded as boolean;
+                session.user.onboardingCompleted = token.onboardingCompleted as boolean;
+                session.user.isSetupComplete = token.isSetupComplete as boolean;
             }
             return session;
         }

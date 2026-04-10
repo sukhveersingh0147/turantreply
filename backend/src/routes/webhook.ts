@@ -210,7 +210,7 @@ webhookRouter.post("/", async (req: Request, res: Response) => {
                                 message: replyMessage,
                                 sender: "BUSINESS",
                                 senderType: "AI",
-                                aiModel: "gpt-4o-mini",
+                                aiModel: "moonshotai/kimi-k2-instruct",
                             },
                         });
                     } catch (msgErr: any) {

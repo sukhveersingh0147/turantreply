@@ -62,7 +62,7 @@ const Navbar = ({ user }: { user?: any }) => {
           <div className="hidden md:flex items-center gap-4">
             {user ? (
               <Link
-                href="/dashboard"
+                href="/overview"
                 className="px-6 py-2.5 rounded-full bg-[#25D366] text-black font-bold text-sm hover:shadow-[0_0_20px_rgba(37,211,102,0.4)] transition-all hover:-translate-y-0.5"
               >
                 Dashboard

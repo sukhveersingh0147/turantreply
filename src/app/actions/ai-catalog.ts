@@ -61,8 +61,8 @@ Respond ONLY with the JSON:
     try {
         // Use a vision-capable model if an image is provided
         const isGroq = process.env.OPENAI_BASE_URL?.includes("groq");
-        const defaultModel = process.env.AI_MODEL || "openai/gpt-4o-mini";
-        const visionModel = isGroq ? "llama-3.2-11b-vision-instant" : "gpt-4o-mini";
+        const defaultModel = process.env.AI_MODEL || "moonshotai/kimi-k2-instruct";
+        const visionModel = isGroq ? "llama-3.2-11b-vision-instant" : "moonshotai/kimi-k2-instruct";
         const model = image ? visionModel : defaultModel;
 
         const messages: any[] = [

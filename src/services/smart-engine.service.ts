@@ -62,7 +62,7 @@ export class SmartEngineService {
                     : "This is a strategic review of the conversation.";
 
             const response = await openai.chat.completions.create({
-                model: process.env.AI_MODEL || "openai/gpt-4o-mini",
+                model: process.env.AI_MODEL || "moonshotai/kimi-k2-instruct",
                 messages: [
                     {
                         role: "system",

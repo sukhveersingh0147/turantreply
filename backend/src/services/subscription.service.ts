@@ -20,7 +20,7 @@ export class SubscriptionService {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 30);
 
-        await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx: any) => {
             // Update Business plan info
             await tx.business.update({
                 where: { userId },

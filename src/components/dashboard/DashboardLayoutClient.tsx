@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { apiFetch } from "@/lib/api";
 import Script from "next/script";
 import {
     LayoutDashboard,
@@ -381,24 +382,24 @@ export default function DashboardLayoutClient({
         const fetchCounts = async () => {
             try {
                 // Appointments count
-                const apptsRes = await fetch("/api/appointments?filter=upcoming&limit=1");
+                const apptsRes = await apiFetch("/appointments?filter=upcoming&limit=1");
                 if (apptsRes.ok) {
                     const data = await apptsRes.json();
                     setPendingCount(data.stats?.pendingCount || 0);
                 }
 
                 // Queries count
-                const queriesRes = await fetch("/api/queries/stats");
+                const queriesRes = await apiFetch("/system/sidebar/counts?type=queries");
                 if (queriesRes.ok) {
                     const data = await queriesRes.json();
-                    setQueriesCount(data.totalCount || 0);
+                    setQueriesCount(data.counts?.queries || 0);
                 }
 
                 // Reminders count (Due Today)
-                const remindersRes = await fetch("/api/reminders?filter=today&limit=1");
+                const remindersRes = await apiFetch("/system/sidebar/counts?type=reminders");
                 if (remindersRes.ok) {
                     const data = await remindersRes.json();
-                    setRemindersCount(data.stats?.dueToday || 0);
+                    setRemindersCount(data.counts?.reminders || 0);
                 }
             } catch (err) {
                 console.error("Failed to fetch sidebar counts", err);

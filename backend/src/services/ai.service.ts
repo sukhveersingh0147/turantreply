@@ -12,7 +12,7 @@ export class AIService {
 
     async generateReply(systemPrompt: string, userMessage: string, contextString: string, businessType?: string) {
         try {
-            const model = process.env.AI_MODEL || "gpt-4o-mini";
+            const model = process.env.AI_MODEL || "moonshotai/kimi-k2-instruct";
             const response = await this.openai.chat.completions.create({
                 model: model,
                 temperature: 0.7,

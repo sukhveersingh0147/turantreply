@@ -41,8 +41,8 @@ export async function POST(req: Request) {
         }
 
         // 2. Determine WABA ID and Phone Number ID
-        let wabaId = manualWabaId;
-        let phoneNumberId = manualPhoneId;
+        let wabaId = (manualWabaId as string)?.trim();
+        let phoneNumberId = (manualPhoneId as string)?.trim();
         let displayPhoneNumber = "WhatsApp Business";
 
         if (!wabaId || !phoneNumberId) {
@@ -104,8 +104,31 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Business profile not found. Please complete basic setup first." }, { status: 404 });
         }
 
-        // 4. Store/Update in database
+        // 4. De-duplicate: Ensure no other business is using this Phone ID
+        console.log(`[WHATSAPP_CONNECT] De-duplicating ID: ${phoneNumberId}`);
+        
         await prisma.$transaction([
+            // Clear other businesses using this Phone ID
+            prisma.business.updateMany({
+                where: { 
+                    waPhoneNumberId: phoneNumberId,
+                    id: { not: business.id }
+                },
+                data: {
+                    waPhoneNumberId: null,
+                    waToken: null,
+                    waWabaId: null,
+                    whatsappNumber: null,
+                }
+            }),
+            // Also clear WhatsAppAccount associations
+            prisma.whatsAppAccount.deleteMany({
+                where: {
+                    phone_number_id: phoneNumberId,
+                    userId: { not: session.user.id }
+                }
+            }),
+            // Upsert the current user's connection
             prisma.whatsAppAccount.upsert({
                 where: { userId: session.user.id },
                 update: {
@@ -122,6 +145,7 @@ export async function POST(req: Request) {
                     access_token: longLivedToken,
                 }
             }),
+            // Update the current business profile
             prisma.business.update({
                 where: { id: business.id },
                 data: {
@@ -142,7 +166,7 @@ export async function POST(req: Request) {
                     `https://graph.facebook.com/${apiVersion}/${wabaId}/subscriptions`,
                     {
                         object: "whatsapp_business_account",
-                        callback_url: `${callbackUrl}/api/webhook`,
+                        callback_url: `${callbackUrl}/api/webhook/whatsapp`,
                         verify_token: process.env.WHATSAPP_VERIFY_TOKEN || "turantreply_verify_token_123",
                         fields: ["messages", "message_deliveries"]
                     },

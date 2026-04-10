@@ -45,7 +45,7 @@ async function getSystemStatus() {
         services: [
             { name: "PostgreSQL Database", status: dbStatus, latency: dbLatency, icon: Database, details: "Primary Data Store" },
             { name: "WhatsApp Cloud API", status: "OPERATIONAL", latency: "145ms", icon: Globe, details: "Meta API Integration" },
-            { name: "OpenAI GPT-4o", status: "OPERATIONAL", latency: "1.2s", icon: Zap, details: "AI Inference Engine" },
+            { name: "Kimi K2 (Groq)", status: "OPERATIONAL", latency: "0.4s", icon: Zap, details: "AI Inference Engine" },
             { name: "Message Queue (BullMQ)", status: "HEALTHY", latency: "2ms", icon: Server, details: "Background Jobs" },
         ],
         infrastructure: [

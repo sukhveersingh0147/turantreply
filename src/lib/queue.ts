@@ -581,7 +581,7 @@ export async function processInboundMessage(data: {
                         message: aiReply,
                         sender: "BUSINESS",
                         senderType: "AI",
-                        aiModel: process.env.AI_MODEL || "gpt-4o-mini",
+                        aiModel: process.env.AI_MODEL || "moonshotai/kimi-k2-instruct",
                     }
                 });
             } catch (msgErr: any) {

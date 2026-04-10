@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { Check } from "lucide-react";
 import { WhatsAppConnect } from "./WhatsAppConnect";
 import { AIConfigAssistant } from "./AIConfigAssistant";
+import DeploymentManager from "./DeploymentManager";
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -32,6 +33,7 @@ const tabs = [
     { key: "billing", label: "Billing", icon: CreditCard },
     { key: "notifications", label: "Notifications", icon: Bell },
     { key: "team", label: "Team", icon: Users },
+    { key: "deployment", label: "Deployment", icon: Rocket },
     { key: "security", label: "Security", icon: Shield },
 ];
 
@@ -91,7 +93,7 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
         notifyOnNewLead: business?.notifyOnNewLead ?? true,
         notifyOnAiPause: business?.notifyOnAiPause ?? true,
     });
-    
+
     const [isPushSupported, setIsPushSupported] = useState(false);
     const [isSubscribed, setIsSubscribed] = useState(false);
 
@@ -123,10 +125,10 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
             }
 
             await navigator.serviceWorker.register('/sw.js');
-            
+
             // Wait for service worker to be ready and active
             let registration = await navigator.serviceWorker.ready;
-            
+
             // If the worker is not yet active, wait for it
             if (!registration.active) {
                 await new Promise<void>((resolve) => {
@@ -140,7 +142,7 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
                     }
                 });
             }
-            
+
             const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
             if (!vapidPublicKey) throw new Error("VAPID public key not found");
 
@@ -152,8 +154,8 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
             });
 
             const subJson = JSON.parse(JSON.stringify(subscription));
-            await savePushSubscription(subJson); 
-            
+            await savePushSubscription(subJson);
+
             setIsSubscribed(true);
             toast.success("Desktop notifications enabled!");
         } catch (error: any) {
@@ -208,7 +210,7 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
             toast.error("Please enter a business description first");
             return;
         }
-        
+
         setAiGenerating(true);
         try {
             const result = await generateAISettings(aiDraftDescription);
@@ -268,7 +270,7 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
             setInviteEmail("");
             // In a real app we'd refresh the list, but for now we'll rely on server action revalidation
             // or a local update if we want it snappy.
-            window.location.reload(); 
+            window.location.reload();
         } catch (err: any) {
             toast.error(err.message || "Failed to invite member");
         } finally {
@@ -324,7 +326,7 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
                     <div className="glass-card border border-white/5 p-6 space-y-5">
                         <div className="flex items-center justify-between">
                             <h2 className="font-bold font-[Outfit]">Business Profile</h2>
-                            <button 
+                            <button
                                 onClick={() => setShowAIAssistant(true)}
                                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#25D366]/10 border border-[#25D366]/20 text-[10px] font-bold text-[#25D366] hover:bg-[#25D366]/20 transition-all"
                             >
@@ -586,9 +588,8 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
                                 <h3 className="text-3xl font-black font-[Outfit] text-white flex items-center gap-2">
                                     {business?.plan}
                                     {business?.plan !== "FREE" ? (
-                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                            business?.subscriptionStatus === "ACTIVE" ? "bg-[#25D366]/20 text-[#25D366]" : "bg-red-500/20 text-red-400"
-                                        }`}>
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${business?.subscriptionStatus === "ACTIVE" ? "bg-[#25D366]/20 text-[#25D366]" : "bg-red-500/20 text-red-400"
+                                            }`}>
                                             {business?.subscriptionStatus === "ACTIVE" ? "ACTIVE" : "EXPIRED"}
                                         </span>
                                     ) : (
@@ -670,7 +671,7 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
                                         <p className="text-[10px] text-white/40">These charges are billed directly by Meta, not Turant Reply</p>
                                     </div>
                                 </div>
-                                
+
                                 <div className="grid sm:grid-cols-2 gap-4 mt-2">
                                     <div className="space-y-2">
                                         <h5 className="text-[11px] font-bold text-white/70 flex items-center gap-1.5">
@@ -696,9 +697,9 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
                                     <p className="text-[10px] text-white/40 mb-3 italic">
                                         To manage Meta billing, visit your Facebook Business Manager &gt; Billing & Payments.
                                     </p>
-                                    <a 
-                                        href="https://business.facebook.com/billing_hub" 
-                                        target="_blank" 
+                                    <a
+                                        href="https://business.facebook.com/billing_hub"
+                                        target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-white transition-all"
                                     >
@@ -736,8 +737,8 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
                                 <div>
                                     <h3 className="text-sm sm:text-base font-bold text-white">Browser Push Notifications</h3>
                                     <p className="text-[10px] sm:text-xs text-white/40">
-                                        {isSubscribed 
-                                            ? "Alerts are active on this device" 
+                                        {isSubscribed
+                                            ? "Alerts are active on this device"
                                             : "Enable browser alerts to get notified even when Turant Reply is closed"
                                         }
                                     </p>
@@ -763,7 +764,7 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
                         {/* Toggles */}
                         <div className="space-y-4">
                             <h4 className="text-xs sm:text-sm font-bold font-[Outfit] text-white/70">Alert Types</h4>
-                            
+
                             <div className="grid gap-3">
                                 {[
                                     { key: "notifyOnEmergency", label: "AI Emergency Alerts", desc: "Get notified immediately when AI detects a frustrated customer needing human help." },
@@ -813,14 +814,14 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
                                 Add Team Member
                             </h3>
                             <div className="flex flex-col sm:flex-row gap-3">
-                                <input 
-                                    type="email" 
+                                <input
+                                    type="email"
                                     placeholder="Enter agent's email..."
                                     value={inviteEmail}
                                     onChange={(e) => setInviteEmail(e.target.value)}
                                     className="input-dark flex-1"
                                 />
-                                <button 
+                                <button
                                     onClick={handleInvite}
                                     disabled={loading || !inviteEmail}
                                     className="px-6 py-2.5 rounded-xl bg-[#25D366] text-black text-xs font-black flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(37,211,102,0.3)] transition-all disabled:opacity-50"
@@ -865,7 +866,7 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
                                             <div className="px-3 py-1 rounded-full bg-blue-500/10 text-[10px] font-bold text-blue-400 uppercase tracking-widest">
                                                 {member.role}
                                             </div>
-                                            <button 
+                                            <button
                                                 onClick={() => handleRemove(member.id)}
                                                 className="p-2 rounded-lg text-white/10 hover:text-red-400 hover:bg-red-400/10 transition-all opacity-0 group-hover:opacity-100"
                                             >
@@ -886,6 +887,10 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
                     </div>
                 )}
 
+                {activeTab === "deployment" && (
+                    <DeploymentManager />
+                )}
+
                 {activeTab === "security" && (
                     <div className="glass-card border border-white/5 p-6">
                         <h2 className="font-bold font-[Outfit] mb-4">Security Settings</h2>
@@ -895,7 +900,7 @@ export default function SettingsClient({ business, user, initialTeam = [] }: { b
             </div>
 
             {showAIAssistant && (
-                <AIConfigAssistant 
+                <AIConfigAssistant
                     initialData={{
                         name: businessData.name,
                         businessType: businessData.businessType,
