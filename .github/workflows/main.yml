@@ -46,16 +46,16 @@ jobs:
           cd backend
           npm run build
 
-      - name: Deploy Frontend to cPanel
+      - name: Deploy Frontend to cPanel (SFTP)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftp
-          port: 21
+          protocol: sftp
+          port: 22
           local-dir: ./
-          server-dir: /frontend/
+          server-dir: /home/ehaeyzhq/frontend/
           exclude: |
             **/node_modules/**
             src/**
@@ -63,16 +63,16 @@ jobs:
             .git*
             .github/**
 
-      - name: Deploy Backend to cPanel
+      - name: Deploy Backend to cPanel (SFTP)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftp
-          port: 21
+          protocol: sftp
+          port: 22
           local-dir: ./backend/
-          server-dir: /backend/
+          server-dir: /home/ehaeyzhq/backend/
           exclude: |
             **/node_modules/**
             src/**
