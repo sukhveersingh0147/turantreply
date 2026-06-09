@@ -1,6 +1,9 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
-export const fetcher = (url: string) => apiFetch(url);
+export const fetcher = (url: string) => apiFetch(url).then(res => {
+    if (!res.ok) throw new Error("API fetch failed");
+    return res.json();
+});
 
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     const url = endpoint.startsWith("http") ? endpoint : `${API_URL}${endpoint}`;
@@ -15,11 +18,5 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     };
 
     const response = await fetch(url, options);
-    
-    if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: "An error occurred" }));
-        throw new Error(error.message || response.statusText);
-    }
-
-    return response.json();
+    return response;
 }

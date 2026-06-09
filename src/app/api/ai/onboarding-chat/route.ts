@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import Groq from "groq-sdk";
 import { auth } from "@/auth";
 import { getOnboardingSystemPrompt } from "@/lib/onboarding-prompts";
+import { DEFAULT_AI_MODEL } from "@/config/ai";
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY || "",
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
     const systemPrompt = getOnboardingSystemPrompt(businessType || "general");
 
     const stream = await groq.chat.completions.create({
-      model: "moonshotai/kimi-k2-instruct",
+      model: process.env.AI_MODEL || DEFAULT_AI_MODEL,
       messages: [
         { role: "system", content: systemPrompt },
         ...messages.map((m: any) => ({

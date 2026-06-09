@@ -52,29 +52,26 @@ interface SidebarItem {
     badge?: "new" | "appointments" | "queries" | "reminders";
 }
 
-const unifiedItems: SidebarItem[] = [
+const clientItems: SidebarItem[] = [
     { href: "/overview", label: "Overview", icon: LayoutDashboard },
-    { href: "/appointments", label: "Appointments", icon: Calendar, badge: "appointments" },
-    { href: "/queries", label: "Queries", icon: MessageCircleQuestion, badge: "queries" },
-    { href: "/reminders", label: "Reminders", icon: BellRing, badge: "reminders" },
     { href: "/conversations", label: "Inbox", icon: MessageCircle },
-    { href: "/leads", label: "Contacts", icon: Users, badge: "new" },
+    { href: "/leads", label: "CRM Pipeline", icon: Users, badge: "new" },
+    { href: "/reminders", label: "Follow-Ups", icon: BellRing, badge: "reminders" },
     { href: "/broadcast", label: "Broadcast", icon: Radio },
-    { href: "/automation", label: "Automation", icon: Zap },
-    { href: "/catalog", label: "Catalog", icon: Package },
-    { href: "/campaigns", label: "Campaigns", icon: Megaphone },
-    { href: "/analytics", label: "Analytics", icon: BarChart3 },
-    { href: "/integrations", label: "Integrations", icon: Puzzle },
-    { href: "/affiliate", label: "Affiliate", icon: Users2 },
-    { href: "/support", label: "Support", icon: LifeBuoy },
+    { href: "/appointments", label: "Calendar", icon: Calendar, badge: "appointments" },
+    { href: "/ai-agent", label: "AI Agent", icon: Bot },
+    { href: "/automation", label: "Workflows", icon: Zap },
+    { href: "/billing", label: "Billing", icon: CreditCard },
     { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-const adminItems: SidebarItem[] = [
-    { href: "/admin/subscriptions", label: "System Subs", icon: Bell },
-    { href: "/admin/support", label: "Support Tickets", icon: LifeBuoy },
-    { href: "/inquiries", label: "Inquiries", icon: Bell },
+const agencyItems: SidebarItem[] = [
+    { href: "/admin/dashboard", label: "Overview", icon: LayoutDashboard },
+    { href: "/admin/clients", label: "Clients", icon: Users },
+    { href: "/admin/billing", label: "Billing", icon: CreditCard },
 ];
+
+
 
 function Sidebar({
     collapsed,
@@ -102,21 +99,7 @@ function Sidebar({
     const pathname = usePathname();
     const isAdmin = role === "admin" || role === "support_admin";
     
-    // Filter items based on plan features
-    const features = getPlanFeatures(plan || "FREE");
-    const sidebarItems = unifiedItems.filter(item => {
-        if (item.href === "/overview" || item.href === "/conversations" || item.href === "/leads" || item.href === "/catalog" || item.href === "/settings") return true;
-        if (item.href === "/broadcast") return features.canUseBroadcast;
-        if (item.href === "/automation") return features.canUseCustomFlows;
-        if (item.href === "/campaigns") return features.canUseCampaigns;
-        if (item.href === "/analytics") return true; // Keep analytics for now
-        if (item.href === "/integrations") return true; // Keep integrations
-        return true;
-    });
-
-    const allItems: SidebarItem[] = isAdmin 
-        ? [...sidebarItems, ...adminItems] 
-        : sidebarItems;
+    const allItems = isAdmin ? agencyItems : clientItems;
 
     return (
         <>
@@ -170,7 +153,7 @@ function Sidebar({
                     </div>
 
                     {allItems.map((item) => {
-                        const active = pathname === item.href || pathname.startsWith(item.href + "/");
+                        const active = pathname === item.href || pathname?.startsWith(item.href + "/");
                         return (
                             <Link
                                 key={item.href}
@@ -346,7 +329,7 @@ function BottomNav({ businessType }: { businessType?: string }) {
     return (
         <div className="md:hidden fixed bottom-0 left-0 w-full h-16 bg-[#0a0f14]/90 backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-2 z-30">
             {mobileItems.map((item) => {
-                const active = pathname === item.href || pathname.startsWith(item.href + "/");
+                const active = pathname === item.href || pathname?.startsWith(item.href + "/");
                 return (
                     <Link
                         key={item.href}

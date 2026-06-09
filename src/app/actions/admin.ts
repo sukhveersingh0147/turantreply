@@ -47,14 +47,31 @@ export async function toggleBusinessStatus(businessId: string, currentStatus: st
     revalidatePath("/admin/businesses");
 }
 
+import { PLANS, PlanType } from "@/lib/plans";
+
 export async function updateUserPlan(businessId: string, plan: string) {
     await ensureAdmin();
+    
+    const planType = (plan.toUpperCase() as PlanType) || "FREE";
+    const planFeatures = PLANS[planType];
+    const monthlyLimit = planFeatures?.monthlyLimit ?? 30;
+    
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30); // 30 days renewal
+
     await prisma.business.update({
         where: { id: businessId },
-        data: { plan: plan as any }
+        data: { 
+            plan: plan as any,
+            monthlyLimit,
+            subscriptionStatus: "ACTIVE",
+            subscriptionExpiresAt: expiresAt,
+            lastPayment: new Date(),
+        }
     });
     revalidatePath("/admin/businesses");
     revalidatePath("/admin/users");
+    revalidatePath("/billing");
 }
 
 export async function resetBusinessUsage(businessId: string) {
@@ -199,4 +216,88 @@ export async function getAdminStats() {
         activeLeads,
         totalMessages
     };
+}
+
+// --- Client CRUD Operations for Agency Owner ---
+
+export async function createClient(data: { name: string; email: string; passwordHash: string; businessName: string; plan: string; phone?: string }) {
+    await ensureAdmin();
+    const bcrypt = await import("bcryptjs");
+    const hashedPassword = await bcrypt.default.hash(data.passwordHash, 10);
+    
+    // Create client user and their business
+    const user = await prisma.user.create({
+        data: {
+            name: data.name,
+            email: data.email.trim().toLowerCase(),
+            password: hashedPassword,
+            role: "client",
+            isSetupComplete: true,
+            onboardingCompleted: true,
+        }
+    });
+
+    const business = await prisma.business.create({
+        data: {
+            name: data.businessName,
+            userId: user.id,
+            whatsappNumber: data.phone || null,
+            plan: data.plan || "FREE",
+            subscriptionStatus: "ACTIVE",
+        }
+    });
+
+    revalidatePath("/admin/clients");
+    return { success: true, client: business };
+}
+
+export async function updateClient(businessId: string, data: { name: string; email: string; businessName: string; plan: string; phone?: string; status: string }) {
+    await ensureAdmin();
+    
+    const business = await prisma.business.findUnique({
+        where: { id: businessId },
+        include: { user: true }
+    });
+    
+    if (!business) throw new Error("Client business not found");
+
+    await prisma.business.update({
+        where: { id: businessId },
+        data: {
+            name: data.businessName,
+            whatsappNumber: data.phone || null,
+            plan: data.plan || business.plan,
+            subscriptionStatus: data.status || business.subscriptionStatus,
+        }
+    });
+
+    if (business.user) {
+        await prisma.user.update({
+            where: { id: business.userId },
+            data: {
+                name: data.name,
+                email: data.email.trim().toLowerCase(),
+                status: data.status === "ACTIVE" ? "ACTIVE" : "DISABLED",
+            }
+        });
+    }
+
+    revalidatePath("/admin/clients");
+    return { success: true };
+}
+
+export async function deleteClient(businessId: string) {
+    await ensureAdmin();
+    const business = await prisma.business.findUnique({
+        where: { id: businessId }
+    });
+    if (!business) throw new Error("Client business not found");
+
+    // Deleting the owner user cascades to delete the business and all related records (leads, messages, appointments, etc.)
+    await prisma.user.delete({
+        where: { id: business.userId }
+    });
+
+    revalidatePath("/admin/clients");
+    return { success: true };
 }

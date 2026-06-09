@@ -1,34 +1,26 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "../config/prisma";
 
-export type PlanName = "STARTER" | "GROWTH" | "PRO" | "FREE";
+export type PlanName = "FREE" | "STARTER" | "GROWTH" | "PRO";
 
-export const PLAN_DETAILS: Record<Exclude<PlanName, "FREE">, { price: number; features: string[] }> = {
-    STARTER: {
-        price: 999,
-        features: ["WhatsApp automation", "AI auto reply", "Lead capture", "Basic analytics"]
-    },
-    GROWTH: {
-        price: 2499,
-        features: ["Everything in Starter", "Advanced analytics", "Appointment booking", "Lead scoring", "Automation rules"]
-    },
-    PRO: {
-        price: 4999,
-        features: ["Everything in Growth", "Advanced AI responses", "Multi-channel support", "Priority support", "Custom automation flows"]
-    },
+export const PLAN_DETAILS: Record<PlanName, { price: number }> = {
+    FREE: { price: 0 },
+    STARTER: { price: 999 },
+    GROWTH: { price: 2499 },
+    PRO: { price: 4999 },
 };
 
 export class SubscriptionService {
     /**
      * Activate a new subscription for a user.
      */
-    static async activateSubscription(userId: string, planName: Exclude<PlanName, "FREE">): Promise<void> {
+    static async activateSubscription(userId: string, planName: PlanName): Promise<void> {
         const plan = PLAN_DETAILS[planName];
         if (!plan) throw new Error("Invalid plan name");
 
         const expiresAt = new Date();
-        expiresAt.setMonth(expiresAt.getMonth() + 1);
+        expiresAt.setDate(expiresAt.getDate() + 30);
 
-        await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx: any) => {
             // Update Business plan info
             await tx.business.update({
                 where: { userId },
@@ -64,14 +56,9 @@ export class SubscriptionService {
             where: { userId },
         });
 
-        if (!business || business.plan === "FREE") return false;
+        if (!business || !business.subscriptionExpiresAt) return true;
 
-        const now = new Date();
-        let isExpired = false;
-
-        if (business.subscriptionExpiresAt) {
-            isExpired = now > business.subscriptionExpiresAt;
-        }
+        const isExpired = new Date() > business.subscriptionExpiresAt;
 
         if (isExpired && business.subscriptionStatus !== "EXPIRED") {
             await prisma.business.update({

@@ -74,6 +74,9 @@ export class SeedService {
             industry: template.label,
           }
         });
+      }, {
+        maxWait: 15000,
+        timeout: 30000
       });
 
       return { success: true };

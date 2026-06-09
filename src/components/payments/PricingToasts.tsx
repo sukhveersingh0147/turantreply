@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 function ToastHandler() {
   const searchParams = useSearchParams();
-  const paymentStatus = searchParams.get("payment");
+  const paymentStatus = searchParams?.get("payment");
 
   useEffect(() => {
     if (paymentStatus === "success") {

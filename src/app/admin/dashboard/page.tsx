@@ -20,11 +20,12 @@ async function getAdminMetrics() {
         redirect("/overview");
     }
 
-    const [totalUsers, totalBusinesses, totalLeads, totalMessages] = await Promise.all([
+    const [totalUsers, totalBusinesses, totalLeads, totalMessages, totalAppointments] = await Promise.all([
         prisma.user.count(),
         prisma.business.count(),
         prisma.lead.count(),
         prisma.message.count(),
+        prisma.appointment.count(),
     ]);
 
     const businesses = await prisma.business.findMany({
@@ -63,12 +64,10 @@ async function getAdminMetrics() {
 
     return {
         metrics: [
-            { label: "Total Users", value: totalUsers, icon: Users, color: "text-blue-400", bg: "bg-blue-500/10" },
-            { label: "Total Businesses", value: totalBusinesses, icon: Building2, color: "text-purple-400", bg: "bg-purple-500/10" },
-            { label: "Active Subs", value: activeSubscriptions, icon: CreditCard, color: "text-[#25D366]", bg: "bg-[#25D366]/10" },
-            { label: "Platform MRR", value: `$${mrr}`, icon: TrendingUp, color: "text-orange-400", bg: "bg-orange-500/10" },
+            { label: "Total Clients", value: totalBusinesses, icon: Building2, color: "text-purple-400", bg: "bg-purple-500/10" },
             { label: "Total Leads", value: totalLeads, icon: Zap, color: "text-yellow-400", bg: "bg-yellow-500/10" },
-            { label: "Messages", value: totalMessages, icon: MessageSquare, color: "text-cyan-400", bg: "bg-cyan-500/10" },
+            { label: "Total Conversations", value: totalMessages, icon: MessageSquare, color: "text-cyan-400", bg: "bg-cyan-500/10" },
+            { label: "Total Appointments", value: totalAppointments, icon: CreditCard, color: "text-[#25D366]", bg: "bg-[#25D366]/10" },
         ],
         charts: {
             userGrowthData,
@@ -90,7 +89,7 @@ export default async function AdminDashboardPage() {
             </div>
 
             {/* Metrics Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
                 {data.metrics.map((metric) => (
                     <div key={metric.label} className="glass-card border border-white/5 p-4 flex flex-col gap-2">
                         <div className={`w-8 h-8 rounded-lg ${metric.bg} flex items-center justify-center`}>

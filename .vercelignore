@@ -1,0 +1,11 @@
+# Ignore unnecessary build folders, zip files, and huge files
+.next
+node_modules
+dist_frontend
+tmp
+scripts
+*.zip
+*.log
+*.txt
+.env*
+.vercel

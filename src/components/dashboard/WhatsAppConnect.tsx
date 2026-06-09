@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Smartphone, Loader2, Check, XCircle, Settings2, Trash2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import Link from "next/link";
+import { sendWhatsAppTestMessage } from "@/app/actions/settings";
 
 export function WhatsAppConnect({ business, onClose }: { business?: any; onClose?: () => void }) {
     const [connecting, setConnecting] = useState(false);
@@ -14,6 +14,25 @@ export function WhatsAppConnect({ business, onClose }: { business?: any; onClose
         phoneNumberId: "",
         wabaId: ""
     });
+
+    const [testPhone, setTestPhone] = useState("");
+    const [sendingTest, setSendingTest] = useState(false);
+
+    const handleSendTestMessage = async () => {
+        if (!testPhone) {
+            toast.error("Please enter a phone number");
+            return;
+        }
+        setSendingTest(true);
+        try {
+            await sendWhatsAppTestMessage(testPhone);
+            toast.success("Test message sent successfully!");
+        } catch (err: any) {
+            toast.error(err.message || "Failed to send test message");
+        } finally {
+            setSendingTest(false);
+        }
+    };
 
     const isConnected = !!(business?.waToken && business?.waPhoneNumberId);
     const webhookUrl = "https://www.turantreply.com/api/webhook/whatsapp";
@@ -123,6 +142,29 @@ export function WhatsAppConnect({ business, onClose }: { business?: any; onClose
                                 title="Disconnect"
                             >
                                 {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-3">
+                        <h4 className="text-xs font-bold text-white uppercase tracking-wider">Send Test Message</h4>
+                        <p className="text-[10px] text-white/40 leading-relaxed">
+                            Verify that your WhatsApp credentials are valid by sending a test message.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <input
+                                type="text"
+                                placeholder="Phone number (with country code, e.g. 919876543210)"
+                                value={testPhone}
+                                onChange={(e) => setTestPhone(e.target.value)}
+                                className="input-dark flex-1 text-xs"
+                            />
+                            <button
+                                onClick={handleSendTestMessage}
+                                disabled={sendingTest || !testPhone}
+                                className="px-5 py-2.5 rounded-xl bg-[#25D366] text-black text-xs font-black flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(37,211,102,0.2)] transition-all disabled:opacity-50"
+                            >
+                                {sendingTest ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Test"}
                             </button>
                         </div>
                     </div>

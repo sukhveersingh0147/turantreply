@@ -41,9 +41,6 @@ const Footer = () => {
               <li><Link href="#features" className="text-sm text-zinc-500 hover:text-[#25D366] transition-colors">Features</Link></li>
               <li><Link href="#pricing" className="text-sm text-zinc-500 hover:text-[#25D366] transition-colors">Pricing</Link></li>
               <li><Link href="#how-it-works" className="text-sm text-zinc-500 hover:text-[#25D366] transition-colors">How It Works</Link></li>
-              <li><Link href="/verticals/salon" className="text-sm text-zinc-500 hover:text-[#25D366] transition-colors">Salon</Link></li>
-              <li><Link href="/verticals/gym" className="text-sm text-zinc-500 hover:text-[#25D366] transition-colors">Gym</Link></li>
-              <li><Link href="/verticals/coaching" className="text-sm text-zinc-500 hover:text-[#25D366] transition-colors">Coaching</Link></li>
             </ul>
           </div>
 

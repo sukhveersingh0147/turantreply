@@ -35,7 +35,7 @@ function OnboardingChatContent() {
   const [isApplying, setIsApplying] = useState(false);
 
   const businessType = useMemo(() => {
-    return searchParams.get("type") || session?.user?.businessType || "other";
+    return searchParams?.get("type") || session?.user?.businessType || "other";
   }, [searchParams, session?.user?.businessType]);
 
   // Auto-scroll to bottom

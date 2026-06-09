@@ -58,12 +58,6 @@ export default auth((req) => {
                 return Response.redirect(new URL("/admin/dashboard", nextUrl));
             }
             
-            // Check onboarding first
-            const onboardingCompleted = (req.auth?.user as any)?.onboardingCompleted;
-            if (!onboardingCompleted) {
-                return Response.redirect(new URL("/onboarding/business-type", nextUrl));
-            }
-
             return Response.redirect(new URL("/overview", nextUrl));
         }
         return undefined;
@@ -73,23 +67,43 @@ export default auth((req) => {
         return Response.redirect(new URL("/login", nextUrl));
     }
 
-    // 3. Onboarding & Setup Redirection
-    const onboardingCompleted = (req.auth?.user as any)?.onboardingCompleted;
+    // 3. Setup Redirection
     const isSetupComplete = (req.auth?.user as any)?.isSetupComplete;
+    const plan = (req.auth?.user as any)?.plan;
+    const onboardingCompleted = (req.auth?.user as any)?.onboardingCompleted;
+    const role = (req.auth?.user as any)?.role;
     
     const isOnboardingRoute = nextUrl.pathname.startsWith("/onboarding");
-    const isSetupRoute = nextUrl.pathname.startsWith("/setup");
+    const isPlansRoute = nextUrl.pathname === "/onboarding/plans";
+    const isWizardRoute = nextUrl.pathname === "/onboarding/wizard";
+    const isAdminRoute = nextUrl.pathname.startsWith("/admin");
     
-    // Onboarding has highest priority
-    if (isLoggedIn && !onboardingCompleted && !isOnboardingRoute && !isPublicRoute && !isApiRoute) {
-        return Response.redirect(new URL("/onboarding/business-type", nextUrl));
-    }
+    if (isLoggedIn && !isPublicRoute && !isApiRoute) {
+        // Admin bypass for plan and onboarding checks
+        if (role === "admin" || role === "support_admin") {
+            if (isOnboardingRoute) {
+                return Response.redirect(new URL("/admin/dashboard", nextUrl));
+            }
+            return undefined; // Let admins access anything (except they shouldn't be forced to onboard)
+        }
 
-    // Then Setup
-    if (isLoggedIn && onboardingCompleted && !isSetupComplete && !isSetupRoute && !isPublicRoute && !isApiRoute) {
-        return Response.redirect(new URL("/setup", nextUrl));
+        // If no plan is selected yet or is FREE (legacy)
+        if (plan === "PENDING" || plan === "FREE" || !plan) {
+            if (!isPlansRoute) {
+                return Response.redirect(new URL("/onboarding/plans", nextUrl));
+            }
+        } 
+        // Plan selected, but onboarding not finished
+        else if (!onboardingCompleted) {
+            if (!isWizardRoute) {
+                return Response.redirect(new URL("/onboarding/wizard", nextUrl));
+            }
+        }
+        // Everything finished, but trying to access onboarding
+        else if (isOnboardingRoute) {
+            return Response.redirect(new URL("/overview", nextUrl));
+        }
     }
-
 
     return undefined;
 });

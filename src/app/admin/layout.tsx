@@ -81,7 +81,7 @@ function AdminSidebar({
                 <nav className="flex-1 py-4 overflow-y-auto">
                     <div className="space-y-1 px-2">
                         {adminNavItems.map((item) => {
-                            const active = pathname === item.href || pathname.startsWith(item.href + "/");
+                            const active = pathname === item.href || pathname?.startsWith(item.href + "/");
                             return (
                                 <Link
                                     key={item.href}

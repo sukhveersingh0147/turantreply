@@ -50,7 +50,8 @@ export async function register(prevState: any, formData: FormData) {
                     email,
                     password: hashedPassword,
                     referredById,
-                    isSetupComplete: true,
+                    isSetupComplete: false,
+                    onboardingCompleted: false,
                 }
             });
 
@@ -59,8 +60,8 @@ export async function register(prevState: any, formData: FormData) {
                     name: company,
                     userId: user.id,
                     whatsappNumber: phone || null,
-                    plan: "FREE",
-                    subscriptionStatus: "ACTIVE",
+                    plan: "PENDING",
+                    subscriptionStatus: "PENDING",
                     businessType: vertical?.toUpperCase() || "OTHER",
                     industry: vertical || "OTHER",
                     dashboardSeeded: !!vertical,
@@ -71,7 +72,7 @@ export async function register(prevState: any, formData: FormData) {
                 await tx.user.update({
                     where: { id: user.id },
                     data: { 
-                        onboardingCompleted: true,
+                        onboardingCompleted: false,
                         businessType: vertical,
                     }
                 });
@@ -83,10 +84,12 @@ export async function register(prevState: any, formData: FormData) {
                     data: { referralsCount: { increment: 1 } }
                 });
             }
+        }, {
+            maxWait: 15000,
+            timeout: 30000
         });
 
-        const plan = formData.get("plan") as string;
-        const redirectPath = plan ? `/settings?tab=billing&upgrade=${plan}` : "/overview";
+        const redirectPath = "/onboarding/plans";
 
         // After successful registration, log them in
         try {
@@ -105,10 +108,13 @@ export async function register(prevState: any, formData: FormData) {
         if (error instanceof AuthError) {
             return { error: error.cause?.err?.message || "Invalid credentials" };
         }
-        // Rethrow redirect errors from NextAuth
-        if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) {
+        if (
+            error instanceof Error && 
+            (error.message === "NEXT_REDIRECT" || error.message.includes("NEXT_REDIRECT") || (error as any).digest?.startsWith("NEXT_REDIRECT"))
+        ) {
             throw error;
         }
+        
         console.error("Registration error:", error);
         return { error: "Something went wrong" };
     }
@@ -143,7 +149,14 @@ export async function login(prevState: any, formData: FormData) {
                     return { error: `Authentication error: ${error.type}` };
             }
         }
-        // Rethrow Next.js redirects
-        throw error;
+        if (
+            error instanceof Error && 
+            (error.message === "NEXT_REDIRECT" || error.message.includes("NEXT_REDIRECT") || (error as any).digest?.startsWith("NEXT_REDIRECT"))
+        ) {
+            throw error;
+        }
+        
+        console.error("Login error:", error);
+        return { error: "Something went wrong" };
     }
 }

@@ -289,7 +289,6 @@ export default function LandingPage({ vertical }: { vertical?: string }) {
         <main className="relative bg-[#0f0f0f] text-white selection:bg-[#25D366] selection:text-[#0f0f0f]">
             <StructuredData />
             <HeroSection vertical={v} />
-            {!vertical && <VerticalsSection />}
             <CoreFeaturesSection />
             <PricingSection />
             <CTASection vertical={v} />

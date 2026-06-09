@@ -37,7 +37,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     where: { id: user.id },
                     data: { 
                         referredById,
-                        isSetupComplete: true
+                        isSetupComplete: false,
+                        onboardingCompleted: false
                     }
                 });
 
@@ -52,8 +53,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     data: {
                         name: `${user.name || "My Business"}`,
                         userId: user.id,
-                        plan: "FREE",
-                        subscriptionStatus: "ACTIVE",
+                        plan: "PENDING",
+                        subscriptionStatus: "PENDING",
                     }
                 });
             }
@@ -88,12 +89,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                             email: "rs163592@gmail.com",
                             role: "admin",
                             status: "ACTIVE",
-                            isSetupComplete: dbUser?.isSetupComplete || false
+                            isSetupComplete: dbUser?.isSetupComplete || false,
+                            onboardingCompleted: dbUser?.onboardingCompleted || false,
+                            businessType: dbUser?.businessType || null,
+                            dashboardSeeded: dbUser?.dashboardSeeded || false,
+                            plan: "PRO" // Admin gets PRO plan bypass
                         };
                     }
 
                     const user = await prisma.user.findUnique({
-                        where: { email }
+                        where: { email },
+                        include: { business: true }
                     });
 
                     if (!user) {
@@ -126,9 +132,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                         id: user.id,
                         name: user.name,
                         email: user.email,
-                        role: user.email === "rs163592@gmail.com" ? "admin" : user.role, // Force role for main email
+                        role: user.email === "rs163592@gmail.com" ? "admin" : user.role,
                         status: user.status,
-                        isSetupComplete: user.isSetupComplete
+                        isSetupComplete: user.isSetupComplete,
+                        onboardingCompleted: user.onboardingCompleted,
+                        businessType: user.businessType,
+                        dashboardSeeded: user.dashboardSeeded,
+                        plan: user.business?.plan || "PENDING"
                     };
                 } catch (error) {
                     console.error("[AUTH] Error:", (error as any).message);

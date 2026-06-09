@@ -3,6 +3,7 @@ import IORedis from "ioredis";
 import { prisma } from "./prisma";
 import { generateAIResponse, extractLeadData } from "./openai";
 import { sendWhatsAppMessage, validatePhoneNumber } from "./whatsapp";
+import { DEFAULT_AI_MODEL } from "@/config/ai";
 import { sendPushNotification } from "./push";
 import { ArcFollowupService } from "@/services/arc-followup.service";
 import { createPaymentLink } from "@/app/actions/payments";
@@ -581,7 +582,7 @@ export async function processInboundMessage(data: {
                         message: aiReply,
                         sender: "BUSINESS",
                         senderType: "AI",
-                        aiModel: process.env.AI_MODEL || "moonshotai/kimi-k2-instruct",
+                        aiModel: process.env.AI_MODEL || DEFAULT_AI_MODEL,
                     }
                 });
             } catch (msgErr: any) {

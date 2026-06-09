@@ -8,9 +8,9 @@ import { useSearchParams } from "next/navigation";
 
 function SignupForm() {
     const searchParams = useSearchParams();
-    const plan = searchParams.get("plan");
-    const vertical = searchParams.get("vertical");
-    const ref = searchParams.get("ref");
+    const plan = searchParams?.get("plan");
+    const vertical = searchParams?.get("vertical");
+    const ref = searchParams?.get("ref");
     const [state, action, isPending] = useActionState(register, null);
 
     // Sync referral code to cookie for Google Sign-in to pickup

@@ -1,11 +1,12 @@
 import Groq from "groq-sdk";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_AI_MODEL } from "@/config/ai";
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY || "",
 });
 
-export const KIMI_MODEL = "moonshotai/kimi-k2-instruct";
+export const KIMI_MODEL = DEFAULT_AI_MODEL;
 
 export const MASTER_SYSTEM_PROMPT = (business: {
   name: string;

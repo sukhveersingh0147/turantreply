@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { openai } from "@/lib/openai";
 import { getInventory } from "./inventory";
 import { getAccessibleBusiness } from "./settings";
+import { DEFAULT_AI_MODEL, VISION_AI_MODEL } from "@/config/ai";
 
 export async function processCatalogCommand(message: string, history: any[] = [], image?: string) {
     const session = await auth();
@@ -61,8 +62,8 @@ Respond ONLY with the JSON:
     try {
         // Use a vision-capable model if an image is provided
         const isGroq = process.env.OPENAI_BASE_URL?.includes("groq");
-        const defaultModel = process.env.AI_MODEL || "moonshotai/kimi-k2-instruct";
-        const visionModel = isGroq ? "llama-3.2-11b-vision-instant" : "moonshotai/kimi-k2-instruct";
+        const defaultModel = process.env.AI_MODEL || DEFAULT_AI_MODEL;
+        const visionModel = isGroq ? VISION_AI_MODEL : DEFAULT_AI_MODEL;
         const model = image ? visionModel : defaultModel;
 
         const messages: any[] = [

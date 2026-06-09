@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x"]
 }
 
 datasource db {
@@ -118,7 +119,13 @@ model Business {
   autoBookingEnabled     Boolean            @default(false)
   mediaAutoSendEnabled   Boolean            @default(true)
   lowStockAlertsEnabled  Boolean            @default(true)
-  
+
+  // AI Settings
+  agentName              String?
+  welcomeMessage         String?
+  tone                   String?            @default("PROFESSIONAL")
+  fallbackMessage        String?
+
   // AI Smart Engine Settings
   aiActionMode           String             @default("SUGGEST") // AUTO, SUGGEST, MANUAL
   followUpInterval       Int                @default(24)       // Hours

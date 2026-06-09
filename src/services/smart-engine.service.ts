@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { openai } from "@/lib/openai";
 import { hasFeature } from "@/lib/plans";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { DEFAULT_AI_MODEL } from "@/config/ai";
 
 export type SmartActionType = "FOLLOW_UP" | "OFFER" | "PRIORITIZE" | "REMINDER" | "NONE";
 
@@ -62,7 +63,7 @@ export class SmartEngineService {
                     : "This is a strategic review of the conversation.";
 
             const response = await openai.chat.completions.create({
-                model: process.env.AI_MODEL || "moonshotai/kimi-k2-instruct",
+                model: process.env.AI_MODEL || DEFAULT_AI_MODEL,
                 messages: [
                     {
                         role: "system",

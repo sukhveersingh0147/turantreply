@@ -1,7 +1,8 @@
 import OpenAI from "openai";
+import { DEFAULT_AI_MODEL } from "@/config/ai";
 
 export const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: process.env.OPENAI_API_KEY || "dummy_key_for_build",
     baseURL: process.env.OPENAI_BASE_URL,
     timeout: 120000, // 120 seconds for free model latency
     defaultHeaders: {
@@ -45,7 +46,7 @@ export async function generateAIResponse(
     }
 
     try {
-        const model = process.env.AI_MODEL || "moonshotai/kimi-k2-instruct";
+        const model = process.env.AI_MODEL || "llama-3.1-8b-instant";
         console.log(`[AI] Generating response using model: ${model}`);
         const response = await openai.chat.completions.create({
             model: model,
@@ -234,7 +235,7 @@ export async function extractLeadData(
     if (!process.env.OPENAI_API_KEY) return {};
 
     try {
-        const model = process.env.AI_MODEL || "moonshotai/kimi-k2-instruct";
+        const model = process.env.AI_MODEL || DEFAULT_AI_MODEL;
         console.log(`[AI] Extracting lead data using model: ${model}`);
         const response = await openai.chat.completions.create({
             model: model,

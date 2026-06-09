@@ -7,9 +7,10 @@ import { INDUSTRY_BLUEPRINTS } from "@/config/blueprints";
 import { SubscriptionService } from "@/services/subscription.service";
 import { OpenAI } from "openai";
 import { savePushSubscription } from "./notifications";
+import { DEFAULT_AI_MODEL } from "@/config/ai";
 
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: process.env.OPENAI_API_KEY || "dummy_key_for_build",
     baseURL: process.env.OPENAI_BASE_URL,
 });
 
@@ -22,6 +23,9 @@ export async function updateBusinessSettings(data: {
     industry: string; 
     description: string; 
     businessType: string;
+    location?: string;
+    workingHours?: any;
+    phone?: string;
     targetAudience?: string;
     pricingDetails?: string;
     businessRules?: string;
@@ -35,6 +39,9 @@ export async function updateBusinessSettings(data: {
             name: data.name,
             industry: data.industry,
             description: data.description,
+            location: data.location || null,
+            workingHours: data.workingHours || null,
+            whatsappNumber: data.phone || business.whatsappNumber,
             // @ts-ignore
             businessType: data.businessType,
             // @ts-ignore
@@ -89,6 +96,10 @@ export async function updateAISettings(data: {
     autoBookingEnabled: boolean;
     mediaAutoSendEnabled: boolean;
     lowStockAlertsEnabled: boolean;
+    agentName?: string;
+    welcomeMessage?: string;
+    tone?: string;
+    fallbackMessage?: string;
 }) {
     const business = await getAccessibleBusiness();
     if (!business) throw new Error("Unauthorized or Business not found");
@@ -108,10 +119,15 @@ export async function updateAISettings(data: {
             mediaAutoSendEnabled: data.mediaAutoSendEnabled,
             // @ts-ignore
             lowStockAlertsEnabled: data.lowStockAlertsEnabled,
+            agentName: data.agentName || null,
+            welcomeMessage: data.welcomeMessage || null,
+            tone: data.tone || "PROFESSIONAL",
+            fallbackMessage: data.fallbackMessage || null,
         },
     });
 
     revalidatePath("/settings");
+    revalidatePath("/ai-agent");
     return { success: true };
 }
 export async function applyBlueprint(blueprintKey: string) {
@@ -144,7 +160,7 @@ export async function generateAISettings(businessDescription: string) {
 
     try {
         const response = await openai.chat.completions.create({
-            model: process.env.AI_MODEL || "moonshotai/kimi-k2-instruct",
+            model: process.env.AI_MODEL || DEFAULT_AI_MODEL,
             messages: [
                 {
                     role: "system",
@@ -318,7 +334,7 @@ export async function improveContentWithAI(fieldName: string, content: string, b
 
     try {
         const response = await openai.chat.completions.create({
-            model: process.env.AI_MODEL || "moonshotai/kimi-k2-instruct",
+            model: process.env.AI_MODEL || DEFAULT_AI_MODEL,
             messages: [
                 {
                     role: "system",
@@ -350,7 +366,7 @@ export async function generateConversationPreview(data: {
 
     try {
         const response = await openai.chat.completions.create({
-            model: process.env.AI_MODEL || "moonshotai/kimi-k2-instruct",
+            model: process.env.AI_MODEL || DEFAULT_AI_MODEL,
             messages: [
                 {
                     role: "system",
@@ -380,5 +396,50 @@ export async function generateConversationPreview(data: {
         return { success: true, messages: content.messages || [] };
     } catch (error: any) {
         throw new Error(error.message || "AI failed to generate preview");
+    }
+}
+
+export async function sendWhatsAppTestMessage(to: string) {
+    const business = await getAccessibleBusiness();
+    if (!business) throw new Error("Unauthorized or Business not found");
+    if (!business.waPhoneNumberId || !business.waToken) {
+        throw new Error("WhatsApp account not connected");
+    }
+
+    const { sendWhatsAppMessage } = await import("@/lib/whatsapp");
+    const cleanTo = to.replace(/\D/g, "");
+
+    await sendWhatsAppMessage(
+        business.waPhoneNumberId,
+        business.waToken,
+        cleanTo,
+        "Hello from Turant Reply! Your WhatsApp connection is active. 🚀"
+    );
+
+    return { success: true };
+}
+
+export async function testAIChatReply(message: string, systemPrompt: string, knowledgeBase: string, tone: string) {
+    try {
+        const response = await openai.chat.completions.create({
+            model: process.env.AI_MODEL || DEFAULT_AI_MODEL,
+            temperature: 0.7,
+            messages: [
+                {
+                    role: "system",
+                    content: `You are simulating the AI receptionist for a business on WhatsApp.
+Tone: ${tone}
+System Prompt: ${systemPrompt}
+Knowledge Base Context:
+${knowledgeBase}
+
+Respond to the customer's query. Follow the rules: be concise, do not invent facts, and match the specified tone.`
+                },
+                { role: "user", content: message }
+            ]
+        });
+        return { success: true, reply: response.choices[0]?.message?.content?.trim() || "No response." };
+    } catch (err: any) {
+        return { success: false, error: err.message || "Failed to generate reply" };
     }
 }

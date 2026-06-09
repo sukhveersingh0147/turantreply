@@ -8,6 +8,21 @@ export default {
             clientId: process.env.GOOGLE_CLIENT_ID || "dummy_client_id",
             clientSecret: process.env.GOOGLE_CLIENT_SECRET || "dummy_client_secret",
             allowDangerousEmailAccountLinking: true,
+        }),
+        GoogleProvider({
+            id: "google-calendar",
+            name: "Google Calendar",
+            clientId: process.env.GOOGLE_CLIENT_ID || "dummy_client_id",
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET || "dummy_client_secret",
+            allowDangerousEmailAccountLinking: true,
+            authorization: {
+                params: {
+                    scope: "openid email profile https://www.googleapis.com/auth/calendar.events",
+                    prompt: "consent",
+                    access_type: "offline",
+                    response_type: "code"
+                }
+            }
         })
     ],
     pages: {
@@ -24,6 +39,7 @@ export default {
                 token.dashboardSeeded = (user as any).dashboardSeeded || false;
                 token.onboardingCompleted = (user as any).onboardingCompleted || false;
                 token.isSetupComplete = (user as any).isSetupComplete || false;
+                token.plan = (user as any).plan || "PENDING";
             }
             
             // Handle manual updates from client (e.g., after setup completion)
@@ -32,6 +48,7 @@ export default {
                 if (session?.onboardingCompleted !== undefined) token.onboardingCompleted = session.onboardingCompleted;
                 if (session?.businessType !== undefined) token.businessType = session.businessType;
                 if (session?.dashboardSeeded !== undefined) token.dashboardSeeded = session.dashboardSeeded;
+                if (session?.plan !== undefined) token.plan = session.plan;
             }
 
             return token;
@@ -44,6 +61,7 @@ export default {
                 session.user.dashboardSeeded = token.dashboardSeeded as boolean;
                 session.user.onboardingCompleted = token.onboardingCompleted as boolean;
                 session.user.isSetupComplete = token.isSetupComplete as boolean;
+                session.user.plan = token.plan as string;
             }
             return session;
         }

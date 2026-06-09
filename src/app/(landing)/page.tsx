@@ -6,7 +6,6 @@ import Navbar from "@/components/landing/Navbar";
 import Hero from "@/components/landing/Hero";
 import TrustedBy from "@/components/landing/TrustedBy";
 import Problem from "@/components/landing/Problem";
-import VerticalSelector from "@/components/landing/VerticalSelector";
 import HowItWorks from "@/components/landing/HowItWorks";
 import Features from "@/components/landing/Features";
 import Testimonials from "@/components/landing/Testimonials";
@@ -26,7 +25,6 @@ export default async function LandingPage() {
         <Hero />
         <TrustedBy />
         <Problem />
-        <VerticalSelector />
         <HowItWorks />
         <Features />
         <Testimonials />

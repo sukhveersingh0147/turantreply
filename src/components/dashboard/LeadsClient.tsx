@@ -63,7 +63,7 @@ export default function LeadsClient({ initialData }: { initialData: any }) {
     };
 
     useEffect(() => {
-        const phone = searchParams.get("phone");
+        const phone = searchParams?.get("phone");
         if (phone) setSearch(phone);
     }, [searchParams]);
 
